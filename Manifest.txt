@@ -1,0 +1,8 @@
+.autotest
+History.txt
+Manifest.txt
+README.txt
+Rakefile
+bin/microstation
+lib/microstation.rb
+test/test_microstation.rb

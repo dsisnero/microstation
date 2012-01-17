@@ -1,0 +1,62 @@
+#     Q:\Bentley\WorkspaceXM\Standards\tables\pen\wmcolor.tbl
+
+BEGIN_GLOBAL
+    VERSION = 890
+    PLOTTING
+    VIEWS = 1-8
+    SYMBOLOGY = AsStored
+    EXPLODE_SHARED_CELLS = 1
+    EXPLODE_DIMENSIONS = 0
+    EXPLODE_MULTILINES = 0
+    EXPLODE_TAGS = 1
+    MATCH_MULTIPLE_SECTIONS = 0
+    PST_COMPATIBLE_MODE = 0
+    SORT_EXPORTED_GRAPHICS = 0
+END_GLOBAL
+
+BEGIN Watermark
+    TYPE          = 17
+    BASICFUNC     = watermark.ba,setwatermark
+END
+
+BEGIN_STRINGS
+    "$FILES$" = "_FILES_"
+    "$DATE$" = "_DATE_"
+    "$TIME$" = "_TIME_"
+    "$NAME$" = "$(_USTN_USERNAME)"
+END_STRINGS
+
+BEGIN_WEIGHTMAP
+      0 = 4 0.15
+      1 = 4 0.3
+      2 = 4 0.475
+      3 = 4 0.65
+      4 = 4 0.7
+      5 = 4 0.825
+      6 = 4 0
+      7 = 4 0
+      8 = 4 1.4
+      9 = 4 1.4
+     10 = 4 1.4
+     11 = 4 2
+     12 = 4 2
+     13 = 4 2
+     14 = 4 2
+     15 = 4 2
+     16 = 4 3.4
+     17 = 4 3.6
+     18 = 4 3.8
+     19 = 4 4
+     20 = 4 4.2
+     21 = 4 4.4
+     22 = 4 4.55
+     23 = 4 0
+     24 = 4 0
+     25 = 4 0
+     26 = 4 0
+     27 = 4 0
+     28 = 4 0
+     29 = 4 0
+     30 = 4 0
+     31 = 4 0
+END_WEIGHTMAP

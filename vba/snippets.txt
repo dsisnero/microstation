@@ -1,0 +1,24 @@
+Function CellExists(cellName As String) As Boolean
+
+  CellExists = False
+  If IsCellLibraryAttached Then
+    Dim celEnum As CellInformationEnumerator
+
+    ' Get list of cells	
+    Set celEnum = GetCellInformationEnumerator(True, False)
+    ' Loop through cells	
+    Do While celEnum.MoveNext
+      If celEnum.Current.Name = cellName Then
+        ' Found the cell so return True 
+        CellExists = True
+        Exit Function
+      End If
+    Loop
+    ' Cell not found	
+    MsgBox "Cell " & cellName & " Not Found"
+  Else
+    ' No library attached	
+    MsgBox "No Cell Library Attached"
+  End If
+
+End Function
