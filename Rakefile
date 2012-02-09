@@ -1,11 +1,13 @@
 # -*- ruby -*-
 
 require 'rubygems'
+require 'rake/clean'
 require 'hoe'
 require 'hoe/git'
 
 require 'rake/testtask'
 
+CLEAN.include("**/#*.*#")
 
 # Hoe.plugin :compiler
 # Hoe.plugin :gem_prelude_sucks
@@ -17,13 +19,10 @@ Hoe.plugin :git
 # Hoe.plugin :rubyforge
 
 Hoe.spec 'microstation' do
-  # HEY! If you fill these out in ~/.hoe_template/Rakefile.erb then
-  # you'll never have to touch them again!
-  # (delete this comment too, of course)
 
   developer('Dominic Sisneros', 'dsisnero@gmail.com')
-
-  # self.rubyforge_name = 'microstationx' # if different than 'microstation'
+  
+  # self.rubyforge_name = 'microstation' # if different than 'microstation'
 end
 
 Rake::TestTask.new do |t|

@@ -1,0 +1,192 @@
+Sub PlotPlaceFence(inColor As Integer, sFileName As String)
+   Dim oElScan As ElementScanCriteria
+   Dim oElEnum As ElementEnumerator
+   Dim oEl As Element
+   Dim oCellEl As CellElement
+   Dim vertexList() As Point2d
+   Dim Color As Long
+   Dim sCommand As String
+   Dim pentable As String
+   Dim pageFacing As String
+   Dim oLevel As Level
+   Dim oView As View
+   Dim bStructures As Boolean
+   Dim bBorderCellFound As Boolean
+   ActiveDesignFile.Models("Default").Activate
+   
+   bBorderCellFound = False
+   bStructures = True
+   If inColor = 1 Then
+        Color = 110
+        pageFacing = "Right"
+   End If
+   If inColor = -1 Then
+        Color = 138
+        pageFacing = "Left"
+   End If
+   If inColor = 0 Then
+        Color = 3
+        pageFacing = "Centered"
+   End If
+   
+   If Color = 3 Then
+    Set oLevel = ActiveDesignFile.Levels(51)
+   Else: Set oLevel = ActiveDesignFile.Levels(63)
+   End If
+   Set oView = ActiveDesignFile.Views(1)
+   oView.ShowLevel oLevel
+   
+   oView.DisplaysConstructions = False
+   oView.DisplaysFill = True
+   
+   oView.Redraw
+   oView.DisplaysConstructions = True
+   oView.Redraw
+   Set oElScan = New ElementScanCriteria
+
+    oElScan.IncludeOnlyCell "DSNBDR"
+    oElScan.ExcludeAllTypes
+    oElScan.IncludeType msdElementTypeCellHeader
+   
+   Set oElEnum = ActiveModelReference.Scan(oElScan)
+If UBound(oElEnum.Clone.BuildArrayFromContents) > -1 Then  'Look for Structures Border
+    bBorderCellFound = True
+    bStructures = True
+ElseIf UBound(oElEnum.Clone.BuildArrayFromContents) = -1 Then 'Look for Roadway Border
+        oElScan.IncludeOnlyCell "BDR1"
+        oElScan.ExcludeAllTypes
+        oElScan.IncludeType msdElementTypeCellHeader
+        Set oElEnum = ActiveModelReference.Scan(oElScan)
+        If UBound(oElEnum.Clone.BuildArrayFromContents) = -1 Then
+            bBorderCellFound = False  'No Border Found
+            
+        Else
+            bBorderCellFound = True
+            bStructures = False
+        End If
+End If
+If bBorderCellFound Then    'Set up print if border is found
+   oElEnum.Reset
+   While oElEnum.MoveNext
+'      Set oEl = oElEnum.Current
+        Set oCellEl = oElEnum.Current
+        oCellEl.ResetElementEnumeration
+        Do While oCellEl.MoveToNextElement(False)
+            Set oEl = oCellEl.CopyCurrentElement
+            If oEl.IsShapeElement And (oEl.Color = Color Or oEl.Color = -1) Then
+                vertexList = oEl.AsShapeElement.GetVertices
+                lowerX = vertexList(0).X
+                lowerY = vertexList(0).Y
+                upperX = lowerX
+                upperY = lowerY
+                For i = 1 To 3
+                    If (lowerX > vertexList(i).X) Then lowerX = vertexList(i).X
+                    If (lowerY > vertexList(i).Y) Then lowerY = vertexList(i).Y
+                    If (vertexList(i).X > upperX) Then upperX = vertexList(i).X
+                    If (vertexList(i).Y > upperY) Then upperY = vertexList(i).Y
+                Next i
+
+                CadInputQueue.SendKeyin "SelView 1"
+                CadInputQueue.SendCommand "Place Fence Block"
+                CadInputQueue.SendDataPoint Point3dFromXY(lowerX, upperY)
+                CadInputQueue.SendDataPoint Point3dFromXY(upperX, lowerY)
+                oEl.Rewrite
+      
+'                Set oLevel = ActiveDesignFile.Levels("Level 63")
+               Set oLevel = ActiveDesignFile.Levels(63)
+               Set oView = ActiveDesignFile.Views(1)
+      
+                If oView.IsLevelShown(oLevel) Then
+                    oView.HideLevel oLevel
+                End If
+                CadInputQueue.SendKeyin ("set fill on")
+                oView.Redraw
+                CadInputQueue.SendKeyin ("set fill on")
+                If OptionButtonInterim Then
+                    pentable = "print pentable attach jointinterimborder.tbl"
+                Else
+                    pentable = "print pentable attach jointStandardsborder.tbl"
+                End If
+
+
+            '  CadInputQueue.SendKeyin ("of= level 63; view 1")
+                CadInputQueue.SendKeyin (pentable)
+                If bStructures Then
+                    CadInputQueue.SendKeyin ("Print Driver structuresborderpdf.plt")
+                Else
+                    CadInputQueue.SendKeyin ("Print Driver roadwayborderpdf.plt")
+                End If
+                CadInputQueue.SendKeyin ("Print Papername ANSI B")
+
+                CadInputQueue.SendKeyin ("Print YSize 10.6 in")
+                CadInputQueue.SendKeyin ("Print XSize 16.5 in")
+                CadInputQueue.SendKeyin ("Print Attributes Constructions Off")
+                CadInputQueue.SendKeyin ("Print Attributes Fenceboundary Off")
+                CadInputQueue.SendKeyin ("Print boundary fence")
+                sCommand = "Print Execute " & sFileName & ".pdf"
+                'CadInputQueue.SendKeyin ("Print Execute")
+                CadInputQueue.SendKeyin (sCommand)
+                LogFile.writeLine ("   ," & sFileName & ", Plot Successful, " & pageFacing)
+
+            End If
+        Loop
+   Wend
+ElseIf bBorderCellFound = False Then
+                'new to version 2-------------------------------
+                    Set oElScan = New ElementScanCriteria
+                    oElScan.Reset
+                    oElScan.ExcludeAllTypes
+                    oElScan.IncludeColor Color
+                    oElScan.IncludeType msdElementTypeShape
+                    Set oElEnum = ActiveModelReference.Scan(oElScan)
+                    
+                       While oElEnum.MoveNext
+                            If oElEnum.Current.IsShapeElement And oElEnum.Current.Color = Color Then
+                                vertexList = oElEnum.Current.AsShapeElement.GetVertices
+                                lowerX = vertexList(0).X
+                                lowerY = vertexList(0).Y
+                                upperX = lowerX
+                                upperY = lowerY
+                                For i = 1 To 3
+                                    If (lowerX > vertexList(i).X) Then lowerX = vertexList(i).X
+                                    If (lowerY > vertexList(i).Y) Then lowerY = vertexList(i).Y
+                                    If (vertexList(i).X > upperX) Then upperX = vertexList(i).X
+                                    If (vertexList(i).Y > upperY) Then upperY = vertexList(i).Y
+                                Next i
+                
+                                CadInputQueue.SendKeyin "SelView 1"
+                                CadInputQueue.SendCommand "Place Fence Block"
+                                CadInputQueue.SendDataPoint Point3dFromXY(lowerX, upperY)
+                                CadInputQueue.SendDataPoint Point3dFromXY(upperX, lowerY)
+                                oElEnum.Current.Rewrite
+                            End If
+                            
+                            Set oLevel = ActiveDesignFile.Levels(63)
+                            Set oView = ActiveDesignFile.Views(1)
+      
+                            If oView.IsLevelShown(oLevel) Then
+                                oView.HideLevel oLevel
+                            End If
+                            CadInputQueue.SendKeyin ("set fill on")
+                                oView.Redraw
+                            CadInputQueue.SendKeyin ("set fill on")
+                            CadInputQueue.SendKeyin ("Print Driver roadwayborderpdf.plt")
+                            If OptionButtonInterim Then
+                                pentable = "print pentable attach jointinterimborder.tbl"
+                            Else
+                                pentable = "print pentable attach jointStandardsborder.tbl"
+                            End If
+
+                            'end new to version 2 --------------------------
+                            CadInputQueue.SendKeyin ("Print Papername ANSI B")
+                            CadInputQueue.SendKeyin ("Print YSize 10.6 in")
+                            CadInputQueue.SendKeyin ("Print XSize 16.5 in")
+                            CadInputQueue.SendKeyin ("Print Attributes Constructions Off")
+                            CadInputQueue.SendKeyin ("Print Attributes Fenceboundary Off")
+                            CadInputQueue.SendKeyin ("Print boundary view")
+                            sCommand = "Print Execute " & sFileName & ".pdf"
+                            CadInputQueue.SendKeyin (sCommand)
+                            LogFile.writeLine ("**," & sFileName & ", Border Cell Not Found, " & pageFacing)
+                        Wend
+End If
+End Sub

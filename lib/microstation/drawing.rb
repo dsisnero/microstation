@@ -63,10 +63,11 @@ module Microstation
     end
 
     def save_as_pdf(name = nil)
-      pdf_name(name)
+      name = pdf_name(name)
       cad_input_queue do |q|
         q << "Print Driver #{pdf_driver}"
         q << "Print Papername ANSI D"
+        q << "Print Attributes Fenceboundary Off"
         q << "Print Execute #{name}"
       end
       
@@ -106,86 +107,102 @@ module Microstation
 
       alias_method :subject, :subject=
 
-    def comments=(var = nil)
-      var ? @ole_obj.Comments = var : @ole_obj.Comments
-    end
+        def comments=(var = nil)
+          var ? @ole_obj.Comments = var : @ole_obj.Comments
+        end
 
-    alias_method :comments, :comments=
+        alias_method :comments, :comments=
 
-    def title=(var = nil)
-      var ? @ole_obj.Title = var : @ole_obj.Title
-    end
+          def title=(var = nil)
+            var ? @ole_obj.Title = var : @ole_obj.Title
+          end
 
-    alias_method :title, :title=
+          alias_method :title, :title=
 
-    
+            def create_scanner(&block)
+              app.create_scanner(&block)
+            end
 
-    def mdate
-      @ole_obj.DateLastSaved
-    end    
+            def scan(scanner = nil)
+              app.scan(scanner)
+            end
 
-    def keywords=(var = nil)
-      var ? @ole_obj.Keywords = var : @ole_obj.keywords
-    end
+            def scan_text
+              sc = create_scanner do |scan|
+                scan.include_textual
+              end
+              app.scan(sc)
+            end
+            
+            def mdate
+              @ole_obj.DateLastSaved
+            end    
 
-    alias_method :keywords , :keywords=
+            def keywords=(var = nil)
+              var ? @ole_obj.Keywords = var : @ole_obj.keywords
+            end
 
-    def dimensions
-      eval_cexpression("tcb->ndices")
-    end
+            alias_method :keywords , :keywords=
 
-    def fullname
-      @ole_obj.FullName
-    end
-    
+              def dimensions
+                eval_cexpression("tcb->ndices")
+              end
 
-    def two_d?
-      dimensions == 2
-    end
+              def fullname
+                @ole_obj.FullName
+              end
+              
 
-    def three_d?
-      dimensions == 3
-    end
+              def two_d?
+                dimensions == 2
+              end
 
-    def name
-      @ole_obj.Name
-    end
+              def three_d?
+                dimensions == 3
+              end
 
-    def path
-      @ole_obj.Path
-    end
-    
+              def name
+                @ole_obj.Name
+              end
 
-    def revision_count
-      @ole_obj.DesignRevisionCount
-    end
-    
+              def path
+                @ole_obj.Path
+              end
 
-    def eval_cexpression(string)
-      app.eval_cexpression(string)
-    end    
+              def full_path
+                Pathname.new(path) + self.name
+              end
+              
+              def revision_count
+                @ole_obj.DesignRevisionCount
+              end
+              
 
-    def close
-      @ole_obj.Close
-    end
+              def eval_cexpression(string)
+                app.eval_cexpression(string)
+              end    
 
-    def ole_obj
-      @ole_obj
-    end
+              def close
+                @ole_obj.Close
+              end
 
-    def pdf_name(lname = nil)
-      pdfname = lname ? lname : self.name
-      pdfname = Pathname.new(pdfname).ext('.pdf')
-      app.windows_path(pdfname)
-    end
-    
-    def pdf_driver
-      app.windows_path( (Microstation.plot_driver_directory + "pdf.plt").to_s)
-    end
-      
-    
+              def ole_obj
+                @ole_obj
+              end
 
-  end
+              def pdf_name(lname = nil)
+                pdfname = lname ? lname : self.name
+                pdfname = Pathname.new(pdfname).ext('.pdf').expand_path      
+                app.windows_path(pdfname)
+              end
+              
+              def pdf_driver
+                app.windows_path( (Microstation.plot_driver_directory + "pdf.plt").to_s)
+              end
+              
 
 
-end
+            end
+
+
+          end

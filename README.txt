@@ -1,18 +1,23 @@
 = microstation
 
-* FIX (url)
+http://github.com/dsisnero/microstation
 
 == DESCRIPTION:
 
-FIX (describe your package)
+this is a gem that wraps Bentley Microstation using the WIN32OLE
+library.
 
 == FEATURES/PROBLEMS:
 
-* FIX (list of features or problems)
+
 
 == SYNOPSIS:
 
-  FIX (code sample of usage)
+  Microstation.run do |app|
+     app.open_drawing('./test.dgn') do |drawing|
+         drawing.save_as_pdf
+    end
+  end
 
 == REQUIREMENTS:
 
@@ -20,13 +25,13 @@ FIX (describe your package)
 
 == INSTALL:
 
-* FIX (sudo gem install, anything else)
+* sudo gem install
 
 == DEVELOPERS:
 
 After checking out the source, run:
 
-  $ rake newb
+  $ rake 
 
 This task will install any missing dependencies, run the tests/specs,
 and generate the RDoc.

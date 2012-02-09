@@ -5,7 +5,14 @@
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 
+if RUBY_VERSION =~ /1\.8/
+  require 'rubygems'
+  require 'require_relative'
+  require 'ruby-debug'
+end
 require 'microstation'
+
+
 
 DRAWING_DIR = File.join(File.dirname(__FILE__) , 'drawings')
 RSpec.configure do |config|
@@ -17,5 +24,10 @@ end
 def drawing_path(file)
   drawing = File.join(DRAWING_DIR,file)
   File.expand_path(drawing)
-  end
+end
+
+def open_existing_drawing(app)
+  app.open_drawing( drawing_path('test.dgn'))
+end
+
 

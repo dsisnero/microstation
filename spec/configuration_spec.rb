@@ -1,11 +1,17 @@
-require_relative 'spec_helper'
+require File.join(File.dirname(__FILE__) ,  'spec_helper')
+
 
 describe Microstation::Configuration do
 
   before(:all) do
     @app = Microstation::App.new
     @configuration = Microstation::Configuration.new(@app)
-  end  
+  end
+
+  after(:all) do
+    @app.quit
+  end
+  
 
   subject { @configuration}
 
@@ -99,7 +105,7 @@ describe Microstation::Configuration do
 
     describe "#expand" do
       it "should be able to expand string" do
-        @configuration.expand( "$(_USTN_USER)$(_USTN_USERNAME).txt").should == "text"
+        @configuration.expand( "$(_USTN_USER)$(_USTN_USERNAME).txt").should_not be_nil
         
       end
 

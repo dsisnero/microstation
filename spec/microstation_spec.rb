@@ -1,4 +1,4 @@
-require_relative 'spec_helper'
+require File.join(File.dirname(__FILE__) ,  'spec_helper')
 
 
 describe Microstation do
@@ -9,7 +9,7 @@ describe Microstation do
 
     it { should be_instance_of Pathname}
     it "to_s" do
-      subject.to_s.should == "microstation"
+      subject.to_s.should == Pathname.getwd.to_s
     end
     
   end
