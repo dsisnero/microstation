@@ -10,7 +10,7 @@ require 'microstation/text'
 require 'microstation/text_node'
 
 module Microstation
-  VERSION = '1.0.0'
+  VERSION = '0.3.0'
 
   def self.root
     Pathname.new( File.dirname(__FILE__)).parent

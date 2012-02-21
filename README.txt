@@ -34,11 +34,11 @@ library.
 
 == REQUIREMENTS:
 
-* FIX (list of requirements)
+An installed version of Microstation
 
 == INSTALL:
 
-* sudo gem install
+* sudo gem install microstation
 
 == DEVELOPERS:
 
