@@ -191,8 +191,18 @@ describe Microstation::Drawing do
         new_drawing.scan(scanner)
       end
     end
-    
 
+    
+    describe "#scan_text" do
+
+      it "only yields textual items" do
+
+        new_drawing.scan_text do |item|
+          item.class.should == (Microstation::Text || Microstation::TextNode)
+        end
+      end
+    end
+    
     
 
   end

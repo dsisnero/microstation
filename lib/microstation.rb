@@ -20,4 +20,17 @@ module Microstation
     root + "plot"
   end
   
+
+  def self.run(&block)
+    begin
+      app = Microstation::App.new
+      block.arity < 1 ? app.instance_eval(&block) : block.call(app)
+    ensure
+      app.quit
+    end
+    
+    
+  end
+
 end
+

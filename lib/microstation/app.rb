@@ -176,11 +176,8 @@ module Microstation
       File.file?( File.expand_path(file) )
     end
 
-    def create_scanner
-      criteria = Microstation::Scan::Criteria.create(self)
-      return criteria unless block_given?
-      yield criteria
-      criteria
+    def create_scanner(&block)
+      Microstation::Scan::Criteria.create_scanner(self,&block)
     end
 
     def find_by_id(id)
@@ -203,7 +200,7 @@ module Microstation
         yield item
       end
       nil
-    end
+    end       
     
     def cad_input_queue
       queue = init_cad_input_queue

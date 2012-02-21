@@ -13,5 +13,23 @@ describe Microstation do
     end
     
   end
+
+
+  describe "#run" do
+    it "opens up and yields an app" do
+      Microstation.run do |app|
+        app.class.should == Microstation::App
+      end
+    end
+
+    it "can be called with implicit receiver" do
+      Microstation.run do
+        self.class.should == Microstation::App
+      end
+    end
+    
+  end
+
 end
+
 

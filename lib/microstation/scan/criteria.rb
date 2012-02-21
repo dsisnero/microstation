@@ -8,17 +8,20 @@ require_relative 'subtype'
 
 module Microstation
 
-  class App 
-
+  class App
+    
     def create_ole_scan_criteria
       ole_obj.CreateObjectInMicroStation("MicroStationDGN.ElementScanCriteria") 
     end
+    
   end
+
+end
+
+module Microstation
   
-
-
   module Scan
-
+    
     class Criteria
 
       include Scan::Klass
@@ -28,8 +31,15 @@ module Microstation
       include Scan::LineStyle
       include Scan::LineWeight
       include Scan::Subtype
-     
+      
       attr_reader :app
+
+      def self.create_scanner(app,&block)
+        sc = create(app)
+        return sc unless block
+        block.arity < 1 ? sc.instance_eval(&block) : block.call(sc)
+        sc
+      end        
 
       def self.create(app)
         sc = new(app)
@@ -42,7 +52,6 @@ module Microstation
         @app = app
         @ole_obj = @app.create_ole_scan_criteria
         @app.load_constants #unless defined? Microstation::MSD
-   #     @app.scanners << self
       end
       
       def resolve

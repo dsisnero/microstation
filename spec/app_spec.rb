@@ -235,12 +235,10 @@ describe "Microstation::App" do
         end
         scanner.should_receive("resolve")
         app.scan(scanner)
-      end
-      
+      end      
 
     end
-        
-      
+    
   end
   
   # it "forwards method missing" do

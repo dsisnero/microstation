@@ -12,11 +12,24 @@ library.
 
 
 == SYNOPSIS:
-
+  text_in_drawing = []
   Microstation.run do |app|
+     sc = create_scanner do 
+         include_color(3)
+         include_level(3)
+     end
      app.open_drawing('./test.dgn') do |drawing|
-         drawing.save_as_pdf
-    end
+       drawing.scan_text do |text|
+          text.reverse! if text =~ /Reverse/  # things that modify the
+          text_in_drawing << text.to_s
+       end
+       drawing.scan( sc) do |ele|
+          
+       end
+
+       
+       drawing.save_as_pdf
+     end
   end
 
 == REQUIREMENTS:
