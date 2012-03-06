@@ -1,0 +1,20 @@
+ #  send_key_in
+
+    # '  CadInputQueue.SendKeyin ("of= level 63; view 1")
+    #             CadInputQueue.SendKeyin (pentable)
+    #             If bStructures Then
+    #                 CadInputQueue.SendKeyin ("Print Driver structuresborderpdf.plt")
+    #             Else
+    #                 CadInputQueue.SendKeyin ("Print Driver roadwayborderpdf.plt")
+    #             End If
+    #             CadInputQueue.SendKeyin ("Print Papername ANSI B")
+
+    #             CadInputQueue.SendKeyin ("Print YSize 10.6 in")
+    #             CadInputQueue.SendKeyin ("Print XSize 16.5 in")
+    #             CadInputQueue.SendKeyin ("Print Attributes Constructions Off")
+    #             CadInputQueue.SendKeyin ("Print Attributes Fenceboundary Off")
+    #             CadInputQueue.SendKeyin ("Print boundary fence")
+    #             sCommand = "Print Execute " & sFileName & ".pdf"
+    #             'CadInputQueue.SendKeyin ("Print Execute")
+    #             CadInputQueue.SendKeyin (sCommand)
+    #             LogFile.writeLine ("   ," & sFileName & ", Plot Successful, " & pageFacing)

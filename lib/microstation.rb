@@ -19,18 +19,29 @@ module Microstation
   def self.plot_driver_directory
     root + "plot"
   end
-  
 
-  def self.run(&block)
+  def self.with_drawings(*files, &block)
+    files = files[0] if files[0].kind_of?  Array
+    opts = {:read_only => true}
+    app = Microstation::App.run do |app|
+      files.each do |file|
+        puts "opening #{file}.."
+        app.open_drawing(file,opts) do |draw|
+          block.call draw
+        end
+
+      end
+    end
+  end
+
+  def self.run(options, &block)
+    options = {:visible => false}.merge(options)
     begin
-      app = Microstation::App.new
+      app = Microstation::App.new(options)
       block.arity < 1 ? app.instance_eval(&block) : block.call(app)
     ensure
       app.quit
     end
-    
-    
   end
 
 end
-

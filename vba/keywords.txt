@@ -1,0 +1,40 @@
+On Error Resume Next
+  Debug.Print "AUTHOR NAME IS " & ActiveDesignFile.Author
+  Debug.Print "COMMENTS " & ActiveDesignFile.Comments
+  Debug.Print "COMP NAME " & ActiveDesignFile.Company
+  Debug.Print "KEYWORDS " & ActiveDesignFile.Keywords
+  Debug.Print "MANAGER " & ActiveDesignFile.Manager
+  Debug.Print "SUBJECT: " & ActiveDesignFile.Subject
+  Debug.Print "The title is " & ActiveDesignFile.Title
+  End Sub
+
+  Sub SetWritableFileProperties()
+  '  Set the standard properties
+    ActiveDesignFile.Author = "AUTHOR SET FROM VBA"
+    ActiveDesignFile.Comments = "COMMENTS FROM VBA!"
+    ActiveDesignFile.Company = "VBA COMPANY"
+    ActiveDesignFile.Keywords = "VBA KEYWORDS"
+    ActiveDesignFile.Manager = "VBA MANAGER"
+    ActiveDesignFile.Subject = "VBA SUBJECT"
+    ActiveDesignFile.Title = "TITLE SET FROM VBA"
+End Sub
+
+Sub GetReadOnlyFileProperties()
+    Dim totalTime As Long
+    Dim minutes As Long, seconds As Long, hours As Long, days As Long
+
+    On Error Resume Next
+
+    Debug.Print ActiveDesignFile.DateLastSaved
+    totalTime = ActiveDesignFile.TotalEditingTime
+    seconds = totalTime Mod 60
+    minutes = (totalTime \ 60) Mod 60
+    hours = (totalTime \ 3600) Mod 24
+    days = totalTime \ 86400
+    Debug.Print "Total editing time is " & days & " days, " _
+                & hours & " hours, " & minutes & " minutes, " _
+                & seconds & " seconds"
+
+    Debug.Print "Editor name: " & ActiveDesignFile.Editor
+    Debug.Print "REVISION: " & ActiveDesignFile.RevisionNumber
+End Sub

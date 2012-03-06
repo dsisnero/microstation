@@ -1,7 +1,7 @@
 require_relative 'wrap'
 module Windows
 
-  class FileSystem    
+  class FileSystem
 
     def self.windows_path(path)
       obj = new
@@ -25,7 +25,7 @@ module Microstation
 
   module MSD
   end
-  
+
 
 
   class App
@@ -35,22 +35,22 @@ module Microstation
     def self.run(options={})
       begin
         the_app = new(options)
-        
+
         yield the_app
       ensure
-        self.quit
+        the_app.quit
       end
     end
 
-    def load_constants      
+    def load_constants
       WIN32OLE.const_load(@ole_obj, MSD) unless MSD.constants.size > 0
     end
 
     attr_reader :scanners
-    
+
     def initialize(options = {})
       visible = options.fetch(:visible){ true }
-      
+
       @ole_obj = WIN32OLE.new('MicrostationDGN.Application')
       @windows = Windows::FileSystem.new
       make_visible(visible)
@@ -71,13 +71,13 @@ module Microstation
 
     def base_dir
       project_dir ? project_dir : Pathname.getwd
-    end      
-    
+    end
+
      def normalize_name(name)
       name = Pathname.new(name)
       name = name.ext('.dgn')  unless name.extname.to_s == /\.(dgn|dwg)$/
       return (base_dir + name).expand_path
-    end     
+    end
 
     def make_visible(visible)
       @visible = visible
@@ -112,7 +112,7 @@ module Microstation
       ensure
         drawing.close
       end
-      
+
     end
 
     def windows_path(path)
@@ -130,12 +130,12 @@ module Microstation
     def username
       configuration["USERNAME"]
     end
-    
-    # seedfile A String expression. The name of the seed file. Should not include a path. The default extension is ".dgn". 
+
+    # seedfile A String expression. The name of the seed file. Should not include a path. The default extension is ".dgn".
     # Typical values are "seed2d" or "seed3d".
     # open
     # If the open argument is True, CreateDesignFile returns the newly-opened DesignFile object; this is the same value as
-    #  ActiveDesignFile. If the Open argument is False, CreateDesignFile returns Nothing.     
+    #  ActiveDesignFile. If the Open argument is False, CreateDesignFile returns Nothing.
     def new_drawing(filename, seedfile="seed2d",open = true,&block)
       drawing_name = normalize_name(filename)
       ole = @ole_obj.CreateDesignFile(seedfile, windows_path(drawing_name), open)
@@ -147,7 +147,7 @@ module Microstation
       ensure
         drawing.close
       end
-      
+
     end
 
     def eval_cexpression(string)
@@ -183,7 +183,7 @@ module Microstation
     def find_by_id(id)
       model = active_model_reference.GetElementById(id)
       wrap(model)
-    end    
+    end
 
     def scan(criteria = nil)
       result = []
@@ -200,8 +200,8 @@ module Microstation
         yield item
       end
       nil
-    end       
-    
+    end
+
     def cad_input_queue
       queue = init_cad_input_queue
       return queue unless block_given?
@@ -222,12 +222,12 @@ module Microstation
 
     def active_model_reference
       @ole_obj.ActiveModelReference rescue nil
-    end 
+    end
 
      private
 
- 
-    
+
+
 
     def init_cad_input_queue
       Microstation::CadInputQueue.new(@ole_obj.CadInputQueue)

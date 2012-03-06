@@ -3,7 +3,7 @@
 require 'rubygems'
 require 'rake/clean'
 require 'hoe'
-require 'hoe/git'
+#require 'hoe/git'
 
 require 'rake/testtask'
 
@@ -21,15 +21,10 @@ Hoe.plugin :git
 Hoe.spec 'microstation' do
 
   developer('Dominic Sisneros', 'dsisnero@gmail.com')
-  
+
   # self.rubyforge_name = 'microstation' # if different than 'microstation'
 end
 
-Rake::TestTask.new do |t|
-  t.libs.push "lib"
-  t.test_files = FileList['test/*_test.rb']
-  t.verbose = true
-end
 
 
 # vim: syntax=ruby

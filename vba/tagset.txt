@@ -1,0 +1,91 @@
+Tag Sets, Tag Definitions, and Tag Elements Example
+The macro DoExample calls the other subroutines and functions to manage tag sets, tag definitions, and to create tag elements. 
+
+
+'  Find or the specified tag set.
+Function GetTagSet(strName As String) As TagSet
+    Dim oTagSets As TagSets
+    
+    Set oTagSets = ActiveDesignFile.TagSets
+    On Error Resume Next
+    Set GetTagSet = oTagSets(strName)
+    If GetTagSet Is Nothing Then Set GetTagSet = oTagSets.Add(strName)
+End Function
+
+Sub AddTagDefinitions(oTagSet As TagSet)
+    Dim oDefs As TagDefinitions
+    Dim oTagDef As TagDefinition
+    
+    Set oDefs = oTagSet.TagDefinitions
+    Set oTagDef = oDefs.Add("StringTag", msdTagTypeCharacter)
+    
+    With oTagDef
+        '  Now print out the initial values for the tag definition properties
+        Debug.Print "DefaultValue is " & .DefaultValue
+        Debug.Print "IsConstant is " & .IsConstant
+        Debug.Print "IsHidden is " & .IsHidden
+        Debug.Print "Name is " & .Name
+        Debug.Print "Prompt is " & .Prompt
+        Debug.Print "TagSetName is " & .TagSetName
+        Debug.Print "TagType is " & .TagType
+        
+        .IsConstant = True
+        .DefaultValue = "THIS IS A CONSTANT VALUE"
+    End With
+    
+    Set oTagDef = oDefs.Add("DoubleTag", msdTagTypeDouble)
+    With oTagDef
+        .DefaultValue = 17.5
+        .IsConstant = False
+        .Prompt = "Enter a double value"
+    End With
+    Set oTagDef = oDefs.Add("LongTag", msdTagTypeLongInteger)
+    With oTagDef
+        .DefaultValue = 70000
+        .IsConstant = False
+        .Prompt = "Enter an integer value"
+    End With
+End Sub
+
+Sub RemoveAttributeSet(dgn As DesignFile, strName As String)
+    On Error Resume Next '  Consume the error if it is not there
+    dgn.TagSets.Remove (strName)
+End Sub
+
+Sub TagElementWithSet(ele As Element, tset As TagSet)
+    Dim index As Integer
+    Dim tags() As TagElement
+    
+    tags = ele.AddTags(tset)
+    For index = LBound(tags) To UBound(tags)
+        With tags(index)
+            .Move Point3dFromXY(0, index + 1)
+            .Redraw
+            '  AddTags added it to the model.  Rewrite it now
+            '  since it has been moved.
+            .Rewrite
+        End With
+    Next
+End Sub
+
+Sub DoExample()
+    Dim oTagSet As TagSet
+    Dim strTagSetName As String
+    Dim ele As LineElement
+    
+    strTagSetName = "VbaExample"
+    
+    RemoveAttributeSet ActiveDesignFile, strTagSetName
+    
+    Set oTagSet = GetTagSet(strTagSetName)
+    AddTagDefinitions oTagSet
+    
+    '  Create the element to tag
+    Set ele = CreateLineElement2(Nothing, Point3dFromXY(0, 0), Point3dFromXY(100, 0))
+    ele.Redraw
+    ActiveModelReference.AddElement ele
+    
+    TagElementWithSet ele, oTagSet
+End Sub
+
+

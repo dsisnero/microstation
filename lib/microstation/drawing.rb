@@ -2,7 +2,6 @@ require_relative 'properties'
 
 module Microstation
 
-  
   class Drawing
 
     include Properties
@@ -12,7 +11,7 @@ module Microstation
     def initialize(app, ole)
       @app = app
       @ole_obj = ole
-      self.author = app.username
+ #     self.author = app.username
     end
 
     def active?
@@ -28,14 +27,12 @@ module Microstation
       cad_input_queue do |q|
         q << "Print Driver #{pdf_driver}"
         q << "Print Papername ANSI D"
+        q << "Print BOUNDARY FIT ALL"
+        q << "Print ATTRIBUTES BORDER OUTLINE OFF"
         q << "Print Attributes Fenceboundary Off"
         q << "Print Execute #{name}"
       end
-      
     end
-
-   
-    
 
     # alias_method :title, :title=
 
@@ -53,11 +50,9 @@ module Microstation
       end
       app.scan(sc)
     end
-    
     def mdate
       @ole_obj.DateLastSaved
-    end        
-
+    end
     #  alias_method :keywords , :keywords=
 
     def dimensions
@@ -67,7 +62,7 @@ module Microstation
     def fullname
       @ole_obj.FullName
     end
-    
+
     def two_d?
       dimensions == 2
     end
@@ -87,15 +82,14 @@ module Microstation
     def full_path
       Pathname.new(path) + self.name
     end
-    
+
     def revision_count
       @ole_obj.DesignRevisionCount
     end
-    
 
     def eval_cexpression(string)
       app.eval_cexpression(string)
-    end    
+    end
 
     def close
       @ole_obj.Close
@@ -107,12 +101,12 @@ module Microstation
 
     def pdf_name(lname = nil)
       pdfname = lname ? lname : self.name
-      pdfname = Pathname.new(pdfname).ext('.pdf').expand_path      
+      pdfname = Pathname.new(pdfname).ext('.pdf').expand_path
       app.windows_path(pdfname)
     end
-    
+
     def pdf_driver
-      app.windows_path( (Microstation.plot_driver_directory + "pdf.plt").to_s)
+      app.windows_path( (Microstation.plot_driver_directory + "pdf-bw.plt").to_s)
     end
 
   end
