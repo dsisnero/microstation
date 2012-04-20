@@ -22,16 +22,17 @@ module Microstation
       @app.cad_input_queue(&block)
     end
 
-    def save_as_pdf(name = nil)
-      name = pdf_name(name)
+    def save_as_pdf(lname = nil,dir=nil)
+      saved_name = pdf_name(lname,dir)
       cad_input_queue do |q|
         q << "Print Driver #{pdf_driver}"
         q << "Print Papername ANSI D"
         q << "Print BOUNDARY FIT ALL"
         q << "Print ATTRIBUTES BORDER OUTLINE OFF"
         q << "Print Attributes Fenceboundary Off"
-        q << "Print Execute #{name}"
+        q << "Print Execute #{saved_name}"
       end
+      puts "saved #{saved_name}"
     end
 
     # alias_method :title, :title=
@@ -40,20 +41,51 @@ module Microstation
       app.create_scanner(&block)
     end
 
-    def scan(scanner = nil)
-      app.scan(scanner)
+    def scan(scanner = nil,&block)
+      app.scan(scanner,&block)
     end
 
-    def scan_text
+    def scan_graphical(&block)
+      sc = create_scanner
+      sc.ExcludeNonGraphical
+      app.scan(sc,&block)
+    end
+
+    def scan_text(&block)
       sc = create_scanner do
         include_textual
       end
-      app.scan(sc)
+      app.scan(sc,&block)
     end
+
+    def scan_tags(&block)
+      sc = create_scanner do
+        include_tags
+      end
+      app.scan(sc,&block)
+    end
+
+    def scan_tagset(name,&block)
+      result = []
+      temp = scan_tags.select{|t| t.TagSetName == name}.group_by{|t| t.BaseElement.ID64}
+      temp.each do |k,tagarray|
+        ole = tagarray.first.ole_base_element
+        tagged_element = TaggedElement.new(ole)
+        ts = tagged_element.add_tagset(name,tagarray)
+        yield ts if block
+        result << ts
+      end
+      result unless block
+    end
+
+    def find_tagset(name)
+      scan_tagset(name).first
+    end
+
     def mdate
       @ole_obj.DateLastSaved
     end
-    #  alias_method :keywords , :keywords=
+    #  alias_method :keywords , :keywords=x
 
     def dimensions
       eval_cexpression("tcb->ndices")
@@ -99,15 +131,32 @@ module Microstation
       @ole_obj
     end
 
-    def pdf_name(lname = nil)
+    def pdf_name(lname = nil,dir=nil)
       pdfname = lname ? lname : self.name
-      pdfname = Pathname.new(pdfname).ext('.pdf').expand_path
+      pdfname = Pathname.new(pdfname).ext('.pdf')
+      pdfname = Pathname.new(dir) + pdfname if dir
+      pdfname = pdfname.expand_path
       app.windows_path(pdfname)
     end
 
     def pdf_driver
       app.windows_path( (Microstation.plot_driver_directory + "pdf-bw.plt").to_s)
     end
+
+    def tagset_names
+      tagsets.map{|ts| ts.name}
+    end
+
+    def tagsets
+      @tagsets ||= TagSets.new(@ole_obj.TagSets)
+    end
+
+    def create_tagset(name)
+      ts = tagsets.create(name)
+      yield ts if block_given?
+      ts
+    end
+
 
   end
 

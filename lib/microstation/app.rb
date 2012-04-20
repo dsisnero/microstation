@@ -1,4 +1,5 @@
 require_relative 'wrap'
+
 module Windows
 
   class FileSystem
@@ -13,7 +14,7 @@ module Windows
     end
 
     def windows_path(path)
-      fs_object.GetAbsolutePathName(path)
+      fs_object.GetAbsolutePathName(path.to_s)
     end
 
   end
@@ -26,7 +27,9 @@ module Microstation
   module MSD
   end
 
-
+  def self.win_fs
+    @windows_fs ||= Windows::FileSystem.new
+  end
 
   class App
 
@@ -74,7 +77,7 @@ module Microstation
     end
 
      def normalize_name(name)
-      name = Pathname.new(name)
+      name = Pathname.new(name) unless name.kind_of? Pathname
       name = name.ext('.dgn')  unless name.extname.to_s == /\.(dgn|dwg)$/
       return (base_dir + name).expand_path
     end
@@ -98,12 +101,18 @@ module Microstation
       end
     end
 
+    def with_template(template)
+      template = Template.new(template,self)
+      yield template
+      template = nil
+    end
+
 
     def open_drawing(filename,options = {})
       raise FileNotFound unless file_exists?(filename)
       readonly = options.fetch(:read_only){ false}
       ole = @ole_obj.OpenDesignFile(windows_path(filename), "ReadOnly" => readonly)
-      drawing = Drawing.new(self, ole)
+      drawing = drawing_from_ole(ole)
       return drawing unless block_given?
       begin
         yield drawing
@@ -136,10 +145,12 @@ module Microstation
     # open
     # If the open argument is True, CreateDesignFile returns the newly-opened DesignFile object; this is the same value as
     #  ActiveDesignFile. If the Open argument is False, CreateDesignFile returns Nothing.
-    def new_drawing(filename, seedfile="seed2d",open = true,&block)
-      drawing_name = normalize_name(filename)
-      ole = @ole_obj.CreateDesignFile(seedfile, windows_path(drawing_name), open)
-      drawing = Drawing.new(self, ole)
+    def new_drawing(filename, seedfile=nil     ,open = true,&block)
+      #drawing_name = normalize_name(filename)
+      seedfile = determine_seed(seedfile)
+      windows_name = windows_path(filename)
+      ole = @ole_obj.CreateDesignFile(seedfile, windows_name, open)
+      drawing = drawing_from_ole(ole)
       return drawing unless block_given?
       begin
         yield drawing
@@ -148,6 +159,15 @@ module Microstation
         drawing.close
       end
 
+    end
+
+    def drawing_from_ole(ole)
+      Drawing.new(self,ole)
+    end
+
+    def determine_seed(seedfile)
+      return "seed2d" unless seedfile
+      return windows_path( File.expand_path(seedfile))
     end
 
     def eval_cexpression(string)
@@ -161,7 +181,8 @@ module Microstation
     end
 
     def active_design_file
-      @ole_obj.ActiveDesignFile rescue nil
+      ole = @ole_obj.ActiveDesignFile rescue nil
+      drawing_from_ole(ole) if ole
     end
 
     def close_active_drawing

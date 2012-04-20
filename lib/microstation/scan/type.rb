@@ -82,7 +82,7 @@ module Microstation
         type_inclusions.each do |type|
           ole_obj.IncludeType(type)
         end
-      end      
+      end
 
       def include_text
         self.include_type(Microstation::MSD::MsdElementTypeText)
@@ -100,7 +100,7 @@ module Microstation
         include_text
         include_text_nodes
       end
-      
+
 
     end
 

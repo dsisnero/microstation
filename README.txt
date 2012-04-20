@@ -20,8 +20,8 @@ library.
      end
      app.open_drawing('./test.dgn') do |drawing|
        drawing.scan_text do |text|
-          text.reverse! if text =~ /Reverse/  # things that modify the
-          text_in_drawing << text.to_s
+          text.reverse! if text =~ /Reverse/  # things that modify thetext_in_drawing 
+          puts text.to_s
        end
        drawing.scan( sc) do |ele|
           

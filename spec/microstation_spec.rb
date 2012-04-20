@@ -1,4 +1,5 @@
-require File.join(File.dirname(__FILE__) ,  'spec_helper')
+#require File.join(File.dirname(__FILE__) ,  'spec_helper')
+require 'spec_helper.rb'
 
 
 describe Microstation do
@@ -11,7 +12,7 @@ describe Microstation do
     it "to_s" do
       subject.to_s.should == Pathname.getwd.to_s
     end
-    
+
   end
 
 
@@ -27,7 +28,7 @@ describe Microstation do
         self.class.should == Microstation::App
       end
     end
-    
+
   end
 
 end

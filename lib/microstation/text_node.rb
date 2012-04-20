@@ -1,6 +1,6 @@
 module Microstation
 
-  class TextNode
+  class TextNode < Element
 
     attr_reader :original_text, :ole_obj
 
@@ -12,7 +12,7 @@ module Microstation
     def empty?
       ole_obj.TextLinesCount == 0
     end
-    
+
     def text?
       false
     end
@@ -20,7 +20,7 @@ module Microstation
     def size
       ole_obj.TextLinesCount
     end
-    
+
 
     def ole_to_ruby(ole)
       count = ole.TextLinesCount
@@ -30,10 +30,6 @@ module Microstation
         str_array << ole.TextLine(i)
       end
       str_array.join("\n")
-    end
-    
-    def text_node?
-      true
     end
 
     def _update(text)
@@ -53,8 +49,16 @@ module Microstation
     def to_s
       @original_text.to_s
     end
-    
+
     def method_missing(meth,*args,&block)
+        dup = @original_text.dup
+        result = dup.send(meth,*args,&block)
+        _update(dup) unless dup == @original_text
+      result
+    end
+
+
+    def method_missing2(meth,*args,&block)
       if meth.to_s =~ /^[A-Z]/
         ole_obj.send(meth,*args)
       else
@@ -63,7 +67,7 @@ module Microstation
         _update(dup) unless dup == @original_text
         result
       end
-    end      
+    end
 
   end
 

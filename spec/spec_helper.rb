@@ -11,9 +11,7 @@ if RUBY_VERSION =~ /1\.8/
   require 'ruby-debug'
 end
 require 'microstation'
-
-
-
+#
 DRAWING_DIR = File.join(File.dirname(__FILE__) , 'drawings')
 RSpec.configure do |config|
   config.treat_symbols_as_metadata_keys_with_true_values = true

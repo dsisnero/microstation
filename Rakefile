@@ -19,8 +19,10 @@ Hoe.plugin :git
 # Hoe.plugin :rubyforge
 
 Hoe.spec 'microstation' do
-
   developer('Dominic Sisneros', 'dsisnero@gmail.com')
+  clean_globs << '**/#*.*#'
+  dependency('rspec', '0.0.0', :dev)
+  dependency('methadone','>= 0.0.0')
 
   # self.rubyforge_name = 'microstation' # if different than 'microstation'
 end
