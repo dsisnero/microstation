@@ -1,0 +1,37 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'methadone'
+require 'microstation'
+
+class App
+  include Methadone::Main
+  include Methadone::CLILogging
+
+  main do |directory, output_dir|
+
+    directory_path = Pathname.new(directory).expand_path
+    exit_now! "arg directory: #{directory_path} doesn't exist" unless directory_path.directory?
+
+    Microstation.dgn2pdf(directory_path, output_dir)
+    # your program code here
+    # You can access CLI options via
+    # the options Hash
+  end
+
+  # supplemental methods here
+
+  # Declare command-line interface here
+
+  description "Convert a directory of Microstation files (*.dgn) to pdf"
+
+  on("-o","--output_dir","Output Dir")
+
+
+  arg :directory
+  arg :output_dir, :optional
+
+  use_log_level_option
+
+  go!
+end

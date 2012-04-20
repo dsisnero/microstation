@@ -1,0 +1,109 @@
+Function Point3dToString(pnt As Point3d) As String
+    Point3dToString = "(" & pnt.X & ", " & pnt.Y & ", " & pnt.Z & ")"
+End Function
+
+Function GetTagSet() As TagSet
+    Dim strName As String
+    Dim oTagSets As TagSets
+    
+    strName = "TagElementExample"
+    Set oTagSets = ActiveDesignFile.TagSets
+    On Error Resume Next
+    Set GetTagSet = oTagSets(strName)
+    If GetTagSet Is Nothing Then
+        Dim td As TagDefinition
+        Set GetTagSet = oTagSets.Add(strName)
+        Set td = GetTagSet.TagDefinitions.Add("TagNumber", msdTagTypeLongInteger)
+        td.IsConstant = True
+        Set td = GetTagSet.TagDefinitions.Add("DateCounted", msdTagTypeCharacter)
+        td.IsConstant = True
+    End If
+End Function
+
+Sub TagElementWithSet(ele As Element, tset As TagSet)
+    Dim distance As Double
+    Dim pntSavedOffset As Point3d
+    Dim eleTag As TagElement
+    Dim tagDef As TagDefinition
+    Dim tagDefs As TagDefinitions
+    
+    distance = ActiveSettings.TextStyle.Height
+    
+    Set tagDefs = tset.TagDefinitions
+    
+    '  Add the first tag
+    Set tagDef = tagDefs("DateCounted")
+    Set eleTag = ele.AddTag(tagDef)
+    pntSavedOffset = eleTag.Offset
+    eleTag.Move Point3dFromXY(0, 2 * distance)
+    Debug.Print "Changed offset from " & Point3dToString(pntSavedOffset) & " to " & Point3dToString(eleTag.Offset)
+    eleTag.Redraw
+    '  AddTags added it to the model.  Rewrite it now
+    '  since it has been moved.
+    eleTag.Rewrite
+    
+    '  Add the second tag
+    Set tagDef = tagDefs("TagNumber")
+    Set eleTag = ele.AddTag(tagDef)
+    eleTag.Move Point3dFromXY(0, distance)
+    eleTag.Redraw
+    '  AddTags added it to the model.  Rewrite it now
+    '  since it has been moved.
+    eleTag.Rewrite
+End Sub
+
+Sub DoExample()
+    Dim ts As TagSet
+    Dim ee As ElementEnumerator
+    Dim sc As New ElementScanCriteria
+    Dim counter As Long
+    Dim eleTag As TagElement
+    Dim today As Date
+    
+    today = Date
+    
+    Set ts = GetTagSet
+    
+    Set ee = ActiveModelReference.GetSelectedElements
+    Do While ee.MoveNext
+        TagElementWithSet ee.Current, ts
+    Loop
+    
+    sc.ExcludeAllTypes
+    sc.IncludeType msdElementTypeTag
+    Set ee = ActiveModelReference.Scan(sc)
+    
+    Do While ee.MoveNext
+        Set eleTag = ee.Current
+        If eleTag.TagSetName = "TagElementExample" Then
+            eleTag.Redraw msdDrawingModeErase
+            If eleTag.TagDefinitionName = "TagNumber" Then
+                counter = counter + 1
+                eleTag.Value = counter
+            ElseIf eleTag.TagDefinitionName = "DateCounted" Then
+                eleTag.Value = "Counted on " & today
+            End If
+            eleTag.Redraw msdDrawingModeNormal
+            eleTag.Rewrite
+        End If
+    Loop
+End Sub
+
+Sub exportTags()
+    Dim fFile As Long: fFile = FreeFile
+    Open "C:\Quantities.csv" For Output As #fFile
+    Dim oScan As ElementEnumerator
+    Set oScan = ActiveModelReference.Scan
+    Do While oScan.MoveNext
+        If (oScan.Current.HasAnyTags) Then
+            Dim oTags() As TagElement
+            Dim tag As Integer
+            oTags = oScan.Current.GetTags()
+            For tag = LBound(oTags) To UBound(oTags)
+                If oTags(tag).TagDefinitionName = "ASSY" Then
+                    Print #fFile, oTags(tag).Value
+                End If
+            Next Tag
+        End If
+    Loop
+End Sub
