@@ -45,6 +45,28 @@ module Microstation
       end
     end
 
+    def self.open_drawing(drawing,options={},&block)
+      self.run(options) do |app|
+        app.open_drawing(file,options) do |draw|
+          block.call draw
+        end
+      end
+    end
+
+    def self.with_drawings(*files,&block)
+      files = files[0] if files[0].kind_of?  Array
+      opts = {:read_only => true}
+      self.run do |app|
+        files.each do |file|
+          puts "opening #{file}.."
+          app.open_drawing(file,opts) do |draw|
+            block.call draw
+          end
+
+        end
+      end
+    end
+
     def load_constants
       WIN32OLE.const_load(@ole_obj, MSD) unless MSD.constants.size > 0
     end
@@ -76,7 +98,7 @@ module Microstation
       project_dir ? project_dir : Pathname.getwd
     end
 
-     def normalize_name(name)
+    def normalize_name(name)
       name = Pathname.new(name) unless name.kind_of? Pathname
       name = name.ext('.dgn')  unless name.extname.to_s == /\.(dgn|dwg)$/
       return (base_dir + name).expand_path
@@ -245,7 +267,7 @@ module Microstation
       @ole_obj.ActiveModelReference rescue nil
     end
 
-     private
+    private
 
 
 

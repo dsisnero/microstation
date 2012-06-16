@@ -14,7 +14,7 @@ require 'microstation/tag'
 require 'erb'
 
 module Microstation
-  VERSION = '0.3.6'
+  VERSION = '0.3.8'
 
   def self.root
     Pathname.new( File.dirname(__FILE__)).parent
@@ -44,7 +44,7 @@ module Microstation
   end
 
   def self.drawings_in_dir(dir)
-     dirpath = Pathname.new(dir).expand_path
+    dirpath = Pathname.new(dir).expand_path
     drawings = Pathname.glob("#{dirpath}/*.d{gn,wg}")
   end
 
@@ -56,21 +56,21 @@ module Microstation
     end
   end
 
+  def self.open_drawing(drawing,options = {}, &block)
+    Microstation::App.open_drawing(drawing,options,&block)
+  end
+
+
+  def self.with_drawings_in_dir(dir,&block)
+    drawings = self.drawings_in_dir(dir)
+    self.with_drawings(drawings,&block)
+  end
 
 
   def self.with_drawings(*files, &block)
-    files = files[0] if files[0].kind_of?  Array
-    opts = {:read_only => true}
-    app = Microstation::App.run do |app|
-      files.each do |file|
-        puts "opening #{file}.."
-        app.open_drawing(file,opts) do |draw|
-          block.call draw
-        end
-
-      end
-    end
+    Microstation::App.with_drawings(*files,&block)
   end
+
 
   def self.run(options={}, &block)
     options = {:visible => false}.merge(options)
@@ -89,7 +89,7 @@ if $0 == __FILE__
 
   require 'pathname'
   require 'pry'
- # require 'pry-nav'
+  # require 'pry-nav'
 
   standard_dir = Pathname.new("~/My Documents/work/projects/rcl/common/drawings/standards").expand_path
   drawings = Pathname.glob("#{standard_dir}/*.dgn")
@@ -127,8 +127,8 @@ if $0 == __FILE__
       :node => node
     }
     tagsets = {:faatitle => {
-      :city => site_info[:city],
-      :title1 => "Promina 100 Node #{node}",
+        :city => site_info[:city],
+        :title1 => "Promina 100 Node #{node}",
         :title2 => "Signal Flow Diagram",
         :dnnew => drawing_name,
         :file => file_name
@@ -140,7 +140,7 @@ if $0 == __FILE__
   end
 
 
-   qtj = {
+  qtj = {
     :usi_west => 'W-036462',
     :usi_east => 'W-036463',
     :t1_number => 'T1-1',
@@ -170,7 +170,7 @@ if $0 == __FILE__
     :loc_id => 'QVE',
   }
 
-   qxv = {
+  qxv = {
     :usi_west => 'W-036468',
     :usi_east => 'W-036470',
     :t1_number => 'TI-2',

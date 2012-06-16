@@ -3,32 +3,51 @@ module Microstation
   module Properties
 
     def author=(var = nil)
-      var ?  @ole_obj.Author = var : @ole_obj.Author
+      if var
+        @ole_obj.Author = var
+      else
+        @ole_obj.Author rescue nil
+      end
+
     end
 
-    alias_method :author, :author=
+      alias_method :author, :author=
 
     def subject=(var = nil)
-      var ? @ole_obj.Subject = var : @ole_obj.Subject
+      if var
+        @ole_obj.Subject = var
+      else
+        @ole_obj.Subject rescue nil
+      end
+
     end
 
-    alias_method :subject, :subject=
+     alias_method :subject, :subject=
 
     def comments=(var = nil)
       var ? @ole_obj.Comments = var : @ole_obj.Comments
     end
 
-    alias_method :comments, :comments=
+      alias_method :comments, :comments=
 
     def title=(var = nil)
-      var ? @ole_obj.Title = var : @ole_obj.Title
+      if var
+        @ole_obj.Title = var
+      else
+        @ole_obj.Title rescue nil
+      end
     end
 
     alias_method :title,:title=
 
     def keywords=(var = nil)
-      var ? @ole_obj.Keywords = var : @ole_obj.keywords
+      if var
+        @ole_obj.Keywords = var
+      else
+        @ole_obj.Keywords rescue nil
+      end
     end
+
 
     alias_method :keywords, :keywords=
 

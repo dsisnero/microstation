@@ -78,6 +78,11 @@ module Microstation
       result unless block
     end
 
+    def save
+      @ole_obj.Save
+    end
+
+
     def find_tagset(name)
       scan_tagset(name).first
     end
