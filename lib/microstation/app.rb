@@ -47,9 +47,7 @@ module Microstation
 
     def self.open_drawing(drawing,options={},&block)
       self.run(options) do |app|
-        app.open_drawing(file,options) do |draw|
-          block.call draw
-        end
+        app.open_drawing(drawing,options,&block)
       end
     end
 
@@ -206,6 +204,8 @@ module Microstation
       ole = @ole_obj.ActiveDesignFile rescue nil
       drawing_from_ole(ole) if ole
     end
+
+    alias :current_drawing :active_design_file
 
     def close_active_drawing
       active_design_file.close if active_design_file

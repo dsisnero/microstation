@@ -11,7 +11,7 @@ describe "Microstation::App" do
   before(:each) do
     File.delete(@new_drawing_path) if File.exist?(@new_drawing_path)
   end
-  
+
 
   after(:all) do
     @app.quit if @app
@@ -35,7 +35,7 @@ describe "Microstation::App" do
 
   describe "#can_open?" do
 
-    
+
     it "can open a dwg file" do
       app.can_open?('test.dwg').should be_true
     end
@@ -56,12 +56,12 @@ describe "Microstation::App" do
     after(:each) do
       app.close_active_drawing
     end
-    
+
 
     let (:valid_file){ @existing_drawing_path }
     let (:invalid_file) {"bogus file"}
 
-    it "returns a drawing if drawing exists" do        
+    it "returns a drawing if drawing exists" do
       drawing = app.open_drawing(valid_file)
       drawing.class.should == Microstation::Drawing
       app.active_design_file.should.eql? drawing.ole_obj
@@ -89,11 +89,11 @@ describe "Microstation::App" do
           app.active_design_file.should.eql? drawing.ole_obj
         end
         app.active_design_file.should == nil
-      end    
+      end
 
     end
 
-  end      
+  end
 
   it "has an ole_object" do
     app.ole_obj.class.should == ::WIN32OLE
@@ -113,12 +113,12 @@ describe "Microstation::App" do
         scan.include_tags
         scan.include_color(3)
       end
-      
+
     end
   end
 
- 
-    
+
+
 
   describe "#create_ole_scanner" do
     it "returns an ole scanner" do
@@ -148,7 +148,7 @@ describe "Microstation::App" do
         app.normalize_name('cool_beans.dng').to_s.should == (Pathname.getwd + 'cool_beans.dgn').to_s
       end
     end
-  end  
+  end
 
   it "#windows path  method" do
     pending
@@ -158,27 +158,27 @@ describe "Microstation::App" do
 
   it "should have a #username" do
     app.username.should == ENV["USERNAME"]
-  end  
+  end
 
   describe "#new_drawing" do
     # before(:each) do
     #   @new_name = "my_new_drawing.dgn"
     #   @new_drawing_path = drawing_path(@new_name)
     #   @existing_drawing_path = drawing_path('test.dgn')
-    # end    
+    # end
 
     after(:each) do
       app.close_active_drawing
      # File.delete(@new_drawing_path) if File.exist?(@new_drawing_path)
-    end    
+    end
 
     let(:existing_drawing){ @existing_drawing_path }
-    let(:new_drawing) { @new_drawing_path } 
-    
+    let(:new_drawing) { @new_drawing_path }
+
 
     it "needs a filename" do
       expect{ app.new_drawing()}.to raise_error
-    end          
+    end
 
     it "raises an error if drawing exists" do
       expect {
@@ -207,7 +207,7 @@ describe "Microstation::App" do
           app.active_design_file.should.eql? drawing.ole_obj
         end
         app.active_design_file.should == nil
-      end    
+      end
 
     end
 
@@ -235,20 +235,32 @@ describe "Microstation::App" do
         end
         scanner.should_receive("resolve")
         app.scan(scanner)
-      end      
+      end
+
+
 
     end
-    
+
+    describe "#current_drawing" do
+      it "returns the current drawing" do
+        app.current_drawing.should == @drawing
+      end
+
+    end
+
+
+
+
   end
-  
+
   # it "forwards method missing" do
-  
+
   #   @app.ole_obj.should_receive("Open")
   #   @app.Open("this is a drawing")
-  
+
 
   # end
 
-  
+
 end
 
