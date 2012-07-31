@@ -11,6 +11,7 @@ require 'microstation/text_node'
 require 'microstation/template'
 require 'microstation/tag_set'
 require 'microstation/tag'
+require 'microstation/dir'
 require 'erb'
 
 module Microstation
