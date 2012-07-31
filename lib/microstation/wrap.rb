@@ -75,9 +75,9 @@ module Microstation
         base = meth.to_s.sub("=", "")
         if attributes.include?(base)
           if meth.match /(=)/
-            update_element(meth,*args)
+            update_element(base,*args)
           else
-            element_value(meth.to_s)
+            element_value(base.to_s)
           end
         else
           super(meth,*args,&block)
