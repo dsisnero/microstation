@@ -33,7 +33,7 @@ describe Microstation::TagSet do
     context 'creating a new tag set' do
       let(:tagsets){ new_drawing.tagsets}
 
-      it 'should allow you to add a tag set' do
+      it 'should have no initial tagsets' do
         tagsets['test'].should be_nil
       end
 
@@ -96,15 +96,20 @@ describe Microstation::TagSet do
 
       context 'given a tagset with tag definitions' do
         let(:tagset){ new_drawing.create_tagset('faatitle')}
-        let(:td1){ tagset.definition('title',String)}
-        let(:td2){ tagset.definition('city', String)}
+      #  let(:td1){ tagset.definition('title',String)}
+       # let(:td2){ tagset.definition('city', String)}
 
         it 'should have correct size' do
+          tagset.definitions.size.should == 0
+          tagset.definition('title', String)
+          tagset.definitions.size.should == 1
+          tagset.definition('city',String)
           tagset.definitions.size.should == 2
         end
 
         it 'should allow you to retrieve a td' do
-          tagset['title'].should == td1
+          td = tagset.definition('title', String)
+          tagset['title'].should == td
         end
       end
     end

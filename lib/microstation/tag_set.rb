@@ -36,6 +36,11 @@ module Microstation
       result
     end
 
+    def reset
+      @tagsets = nil
+    end
+
+
     def tagsets
       @tagsets ||= init_ts
     end
@@ -68,8 +73,9 @@ module Microstation
     def create(name)
       raise if self[name]
       ole = @ole_obj.add(name)
-      ts = TagSet.new(ole)
-      tagsets << ts
+      @tagsets = init_ts
+      ts = self[name]
+      raise if ts.nil?
       ts
     end
 
@@ -151,7 +157,8 @@ module Microstation
       td = TagDefinition.new(self,ole_td)
       td.prompt = options[:prompt] || name
       td.hidden = options[:is_hidden]
-
+      td.constant = options[:is_constant] || false
+      td.default = options[:default] if options[:default]
       #td.hidden = td.fetch(:is_hidden)
       yield td if block_given?
       td
@@ -163,6 +170,7 @@ module Microstation
 
   class TagDefinition
 
+    attr_reader :ole_obj
 
 
     #   msdTagTypeCharacter 1 (&H1)
@@ -223,20 +231,21 @@ module Microstation
       @ole_obj.IsConstant
     end
 
-    def set_constant(val = true)
-      @ole_obj.IsConstant = val
+    def constant=(constant)
+      bool = constant ? true : false
+      @ole_obj.IsConstant = bool
     end
 
-    def default_value
+    def default
       @ole_obj.DefaultValue
     end
 
-    def default_value=(val)
+    def default=(val)
       @ole_obj.DefaultValue = val
     end
 
     def has_default?
-      !!default_value
+      !!default
     end
 
     def hidden?
@@ -265,6 +274,11 @@ module Microstation
       options[:readonly] = true if constant?
       options
     end
+
+    def ==(other)
+      @ole_obj.Name == other.ole_obj.Name  && @ole_obj.TagSetName == other.ole_obj.TagSetName && @ole_obj.TagType == other.ole_obj.TagType
+    end
+
 
 
   end

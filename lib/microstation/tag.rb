@@ -28,6 +28,7 @@ module Microstation
     end
 
     def update_ole(value)
+      value = value.nil? ? "" : value
       @ole_obj.Value = value
     end
 
