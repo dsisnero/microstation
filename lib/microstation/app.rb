@@ -14,7 +14,8 @@ module Windows
     end
 
     def windows_path(path)
-      fs_object.GetAbsolutePathName(path.to_s)
+      path = path.to_path if path.respond_to? :to_path
+      fs_object.GetAbsolutePathName(path.to_str)
     end
 
   end
@@ -129,7 +130,8 @@ module Microstation
 
 
     def open_drawing(filename,options = {})
-      raise FileNotFound unless file_exists?(filename)
+      filename = Pathname(filename)
+      raise FileNotFound unless filename.file?
       readonly = options.fetch(:read_only){ false}
       ole = @ole_obj.OpenDesignFile(windows_path(filename), "ReadOnly" => readonly)
       drawing = drawing_from_ole(ole)
@@ -145,7 +147,7 @@ module Microstation
     end
 
     def windows_path(path)
-      @windows.windows_path(path.to_s)
+      @windows.windows_path(path)
     end
 
     def active_workspace
@@ -205,7 +207,11 @@ module Microstation
       drawing_from_ole(ole) if ole
     end
 
-    alias :current_drawing :active_design_file
+    def current_drawing
+      active_design_file
+    end
+
+ #   alias :current_drawing :active_design_file
 
     def close_active_drawing
       active_design_file.close if active_design_file
