@@ -22,17 +22,24 @@ module Microstation
       @app.cad_input_queue(&block)
     end
 
-    def save_as_pdf(lname = nil,dir=nil)
-      saved_name = pdf_name(lname,dir)
+    def save_as_pdf(options = {})
+      out_name = pdf_name_from_options(options)
+      windows_name = app.windows_path(out_name)
       cad_input_queue do |q|
         q << "Print Driver #{pdf_driver}"
         q << "Print Papername ANSI D"
         q << "Print BOUNDARY FIT ALL"
         q << "Print ATTRIBUTES BORDER OUTLINE OFF"
         q << "Print Attributes Fenceboundary Off"
-        q << "Print Execute #{saved_name}"
+        q << "Print Execute #{windows_name}"
       end
-      puts "saved #{saved_name}"
+      puts "saved #{windows_name}"
+    end
+
+    def pdf_name_from_options(options = {})
+      name = options.fetch(:name){ basename.ext('.pdf')}
+      dir = options.fetch(:dir){ dirname}
+      (dir + name).expand_path
     end
 
     # alias_method :title, :title=
@@ -87,7 +94,7 @@ module Microstation
       scan_tagset(name).first
     end
 
-    def mdate
+    def modified_date
       @ole_obj.DateLastSaved
     end
     #  alias_method :keywords , :keywords=x
@@ -96,9 +103,9 @@ module Microstation
       eval_cexpression("tcb->ndices")
     end
 
-    def fullname
-      @ole_obj.FullName
-    end
+    # def fullname
+    #   @ole_obj.FullName
+    # end
 
     def two_d?
       dimensions == 2
@@ -108,16 +115,20 @@ module Microstation
       dimensions == 3
     end
 
-    def name
-      @ole_obj.Name
+    # def name
+    #   @ole_obj.Name
+    # end
+
+    def basename
+      Pathname(@ole_obj.Name)
+    end
+
+    def dirname
+      Pathname(@ole_obj.Path).expand_path
     end
 
     def path
-      @ole_obj.Path
-    end
-
-    def full_path
-      Pathname.new(path) + self.name
+      dirname + basename
     end
 
     def revision_count
@@ -136,13 +147,12 @@ module Microstation
       @ole_obj
     end
 
-    def pdf_name(lname = nil,dir=nil)
-      pdfname = lname ? lname : self.name
-      pdfname = Pathname.new(pdfname).ext('.pdf')
-      pdfname = Pathname.new(dir) + pdfname if dir
-      pdfname = pdfname.expand_path
-      app.windows_path(pdfname)
-    end
+    # def pdf_name(lname = nil,dir=nil)
+    #   pdfname = lname ? lname : self.name
+    #   pdfname = Pathname(pdfname).ext('.pdf')
+    #   pdfname = Pathname.new(dir) + pdfname if dir
+    #   pdfname = pdfname.expand_path
+    # end
 
     def pdf_driver
       app.windows_path( (Microstation.plot_driver_directory + "pdf-bw.plt").to_s)
