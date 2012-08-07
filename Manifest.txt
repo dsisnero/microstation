@@ -10,9 +10,11 @@ lib/microstation/app.rb
 lib/microstation/attributes.rb
 lib/microstation/cad_input_queue.rb
 lib/microstation/configuration.rb
+lib/microstation/dir.rb
 lib/microstation/drawing.rb
 lib/microstation/enumerator.rb
 lib/microstation/ext/pathname.rb
+lib/microstation/pdf_support.rb
 lib/microstation/properties.rb
 lib/microstation/scan/color.rb
 lib/microstation/scan/criteria.rb

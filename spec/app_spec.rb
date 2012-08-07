@@ -241,12 +241,13 @@ describe "Microstation::App" do
 
     end
 
-    describe "#current_drawing" do
-      it "returns the current drawing" do
-        app.current_drawing.should == @drawing
-      end
+    # describe "#current_drawing" do
+    #   it "returns the current drawing" do
+    #     binding.pry
+    #     app.current_drawing.should == @drawing
+    #   end
 
-    end
+    # end
 
 
 

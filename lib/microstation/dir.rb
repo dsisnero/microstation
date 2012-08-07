@@ -1,16 +1,30 @@
 require_relative 'pdf_support'
-
+require 'fileutils'
 module Microstation
 
   class Dir
 
     include PdfSupport
+    include FileUtils::Verbose
 
     attr_reader :dir, :relative_pdf_path
 
     def initialize(dir,pdf_path=nil)
       @dir = Pathname(dir).expand_path
       @relative_pdf_path = set_relative_pdf_path(pdf_path)
+    end
+
+    def self.Dir(path)
+      case path
+      when Microstation::Dir
+        path
+      else
+        new(Pathname(path))
+      end
+    end
+
+    def ==(other)
+      self.dir == other.dir && self.relative_pdf_path == other.relative_pdf_path
     end
 
     def to_path
@@ -21,6 +35,42 @@ module Microstation
       @dir
     end
 
+    def directory?
+      path.directory?
+    end
+
+    def exist?
+      path.exist?
+    end
+
+
+    def mkdir
+      @dir.mkdir
+    end
+
+    def mkpath
+      @dir.mkpath
+    end
+
+    def +(other)
+      self.class.new( self.path + other)
+    end
+
+
+    def copy(drawing,dir)
+      cp drawing, dir
+    end
+
+    def select_by_name( re)
+      re = Regexp.new(re)
+      drawing_files.select{|n| n.to_path =~ re}
+    end
+
+
+    def find_by_name(re)
+      re = Regexp.new(re)
+      drawing_files.find{|n| n.to_path =~ re}
+    end
 
     def drawings
       Pathname.glob(@dir + "*.d{gn,wg}")

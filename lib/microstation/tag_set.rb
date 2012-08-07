@@ -52,18 +52,25 @@ module Microstation
       end
     end
 
-    def [](name)
+    def find(name)
       return nil if empty?
       tagsets.find{|ts| ts.name == name}
     end
 
+
+
+    def [](name)
+      find(name)
+    end
+
     def remove(name)
-      ts = tagsets.delete_if{|t| t.name == name}
-      ts.each do |ts|
+      ts = find(name)
+      if ts
+        @ole_obj.Remove(name) rescue nil
         ts.close
         ts = nil
       end
-
+      @tagsets = init_ts
     end
 
     def empty?
@@ -191,7 +198,22 @@ module Microstation
     RUBY_TO_MS = TYPES.invert
 
     def self.tag_type(type)
-      RUBY_TO_MS[type]
+      if type.class == Symbol
+        ruby_type = case type
+                    when :char
+                      String
+                    when :int
+                      Integer
+                    when :float
+                      Float
+                    else
+                      :char
+                    end
+      else
+        ruby_type = type
+      end
+
+      RUBY_TO_MS[ruby_type]
     end
 
     def att_type

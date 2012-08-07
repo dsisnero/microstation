@@ -6,6 +6,7 @@ module Microstation
 
     include Properties
 
+
     attr_reader :app
 
     def initialize(app, ole)
@@ -22,8 +23,8 @@ module Microstation
       @app.cad_input_queue(&block)
     end
 
-    def save_as_pdf(options = {})
-      out_name = pdf_name_from_options(options)
+    def save_as_pdf(name = nil, dir = nil)
+      out_name = pdf_name(name,dir)
       windows_name = app.windows_path(out_name)
       cad_input_queue do |q|
         q << "Print Driver #{pdf_driver}"
@@ -115,12 +116,12 @@ module Microstation
       dimensions == 3
     end
 
-    # def name
-    #   @ole_obj.Name
-    # end
+    def name
+      @ole_obj.Name
+    end
 
-    def basename
-      Pathname(@ole_obj.Name)
+     def basename
+      Pathname(name)
     end
 
     def dirname
@@ -147,12 +148,12 @@ module Microstation
       @ole_obj
     end
 
-    # def pdf_name(lname = nil,dir=nil)
-    #   pdfname = lname ? lname : self.name
-    #   pdfname = Pathname(pdfname).ext('.pdf')
-    #   pdfname = Pathname.new(dir) + pdfname if dir
-    #   pdfname = pdfname.expand_path
-    # end
+    def pdf_name(lname = nil,dir=nil)
+      dname = lname ? Pathname(lname) : Pathname(self.basename)
+      pdfname = dname.ext('.pdf')
+      dirname = dir ? Pathname(dir) : Pathname(self.dirname)
+      pdfname = (dirname + pdfname).expand_path
+    end
 
     def pdf_driver
       app.windows_path( (Microstation.plot_driver_directory + "pdf-bw.plt").to_s)
@@ -163,14 +164,30 @@ module Microstation
     end
 
     def tagsets
-      @tagsets ||= TagSets.new(@ole_obj.TagSets)
+      @tagsets = TagSets.new(ole_obj_tagsets)
     end
 
-    def create_tagset(name)
+    def create_tagset(name,&block)
       ts = tagsets.create(name)
-      yield ts if block_given?
+      block.call ts if block
       ts
     end
+
+    def create_tagset!(name,&block)
+      remove_tagset(name)
+      create_tagset(name,&block)
+    end
+
+    def remove_tagset(name)
+      tagsets.remove(name)
+    end
+
+    protected
+    def ole_obj_tagsets
+      @ole_obj.TagSets
+    end
+
+
 
 
   end

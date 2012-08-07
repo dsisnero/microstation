@@ -14,7 +14,7 @@ describe Microstation::Drawing do
   include DrawingHelpers
 
   context "a drawing created with app.new_drawing" do
-    
+
     before(:all) do
       @app = Microstation::App.new
       #     debugger
@@ -22,7 +22,7 @@ describe Microstation::Drawing do
       @new_drawing_path = create_new_drawing_path('my_new_drawing.dgn')
       @new_drawing = @app.new_drawing(@new_drawing_path)
     end
-    
+
     after(:all) do
       @app.close_active_drawing if @app
       @app.quit if @app
@@ -33,25 +33,25 @@ describe Microstation::Drawing do
     let(:new_drawing_path) { @new_drawing_path }
     let(:new_drawing_name) {@drawing_name}
 
-    # describe "#name and path" do           
+    # describe "#name and path" do
 
-    
-      
+
+
 
     #   context "when given a relative name and no project_dir" do
     #     before(:each) do
     #       @app.project_dir = nil
     #       @drawing_name = "my drawing.dgn"
     #       @path = @app.normalize_name(@drawing_name)
-          
+
     #     end
 
     #     after(:each) do
     #       @path.unlink
     #     end
-        
-    #     subject{@app.new_drawing(@drawing_name) }        
-        
+
+    #     subject{@app.new_drawing(@drawing_name) }
+
 
     #     it "#name should be set to the name of the drawing with .dgn extension" do
     #       subject.name.should =~ "my drawing.dgn"
@@ -73,9 +73,9 @@ describe Microstation::Drawing do
     #     after(:each) do
     #       File.delete(@new_drawing.full_path)
     #     end
-        
 
-    #     it "name should be the name of the drawing" do          
+
+    #     it "name should be the name of the drawing" do
     #       @new_drawing.name.should == 'my drawing.dng'
     #     end
 
@@ -85,13 +85,13 @@ describe Microstation::Drawing do
 
     #   end
     # end
-    
+
     it "should be the active drawing" do
       new_drawing.should be_active
     end
 
     describe "#author" do
-     
+
       it "should be '' to start" do
          pending
         new_drawing.author.should == ""
@@ -126,20 +126,20 @@ describe Microstation::Drawing do
         new_drawing.keywords.should == "project, rcl, new"
       end
     end
-    
-    
+
+
     it "should have a #comments method" do
       new_drawing.comments.should == ""
       new_drawing.comments = "these are the comments"
       new_drawing.comments.should == "these are the comments"
     end
 
-  
+
 
 
     it "should have a two_d? method" do
       new_drawing.should be_two_d
-    end    
+    end
 
     it "should be able to save as pdf" do
       new_drawing.save_as_pdf
@@ -157,13 +157,12 @@ describe Microstation::Drawing do
     end
 
     describe "pdf_name" do
-      it "should be the name of the passed in arg if arg is passed in" do
-        name = new_drawing.pdf_name("my_name")
-        name.should =~ /my_name.pdf/
+      it "should be the passed in dirname + name with pdf changed for ext" do
+        new_drawing.pdf_name("my_name","output").to_s.should == File.expand_path(File.join('output', "my_name.pdf"))
       end
 
-      it "should == the name of the drawing file with pdf ext with no args" do
-        new_drawing.stub(:name).and_return "Drawing Name"
+      it "should == the name of the drawing file #basename with pdf ext with no args" do
+        new_drawing.stub(:basename).and_return "Drawing Name"
         File.extname(new_drawing.pdf_name).should == '.pdf'
         File.basename(new_drawing.pdf_name, '.pdf').should == "Drawing Name"
       end
@@ -192,7 +191,7 @@ describe Microstation::Drawing do
       end
     end
 
-    
+
     describe "#scan_text" do
 
       it "only yields textual items" do
@@ -202,8 +201,8 @@ describe Microstation::Drawing do
         end
       end
     end
-    
-    
+
+
 
   end
 end
@@ -229,7 +228,7 @@ end
     #     @drawing.author.should == "test person"
     #   end
 
-    # end      
+    # end
 
     # describe "creating  a new drawing" do
     #   before(:each) do
