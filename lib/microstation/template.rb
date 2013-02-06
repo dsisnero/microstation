@@ -1,8 +1,8 @@
 require 'erb'
 require 'liquid'
 require 'fileutils'
+require File.join(File.dirname(__FILE__), 'extensions/hash')
 module Microstation
-
 
   class Template
 
@@ -25,15 +25,20 @@ module Microstation
 
     def add_binding(scope,locals={},&block)
       tagsets = locals.delete(:tagsets)
-      locals = locals.inject({}){ |h,(k,v)| h[k.to_s] = v ; h }
-      scope = scope.to_h if scope.respond_to?(:to_h)
+      nlocals = normalize_hash(locals)
+      nscope = normalize_hash(scope)
+      nlocals = locals.merge(nscope)
+      nlocals['yield'] = block.nil? ? '' : yield
+      nlocals['content'] = nlocals['yield']
+      [nlocals,tagsets]
+    end
+
+    def normalize_hash(scope)
+       scope = scope.to_h if scope.respond_to?(:to_h)
       if scope.kind_of? Hash
-        scope = scope.inject({}){ |h,(k,v)| h[k.to_s] = v ; h }
-        locals = scope.merge(locals)
+        scope = scope.map_k{|k| k.to_s}
       end
-      locals['yield'] = block.nil? ? '' : yield
-      locals['content'] = locals['yield']
-      [locals,tagsets]
+      scope
     end
 
     def update_tagset(drawing,name,values)
@@ -50,17 +55,20 @@ module Microstation
     end
 
     def __run__(context,locals={},file)
+
       Microstation.run do |app|
         app.new_drawing(file,@template) do |drawing|
           scope,tagsets = add_binding(context,locals)
           tagsets.each do |tagset_name,values|
-            tagset = drawing.find_tagset(tagset_name.to_s)
+            tagset = drawing.find_tagset(tagset_name.to_s).first
+            require 'pry'
+            binding.pry
             tagset.update(values) if tagset
           end
           drawing.scan_text do |text|
             #   binding.pry if text =~ /usi_west|usi_east/
             compiled = ::Liquid::Template.parse(text.to_s)
-            new_text = compiled.render(scope) rescue binding.pry
+            new_text = compiled.render(scope) rescue text #binding.pry
             if new_text != text.to_s
               text.replace(new_text)
             end
@@ -72,7 +80,5 @@ module Microstation
     end
 
   end
-
-
 
 end

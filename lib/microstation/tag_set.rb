@@ -1,25 +1,7 @@
 require File.join(File.dirname(__FILE__) , 'attributes')
+require File.join(File.dirname(__FILE__), 'ts/instance')
+require File.join(File.dirname(__FILE__), 'ts/attribute')
 module Microstation
-
-  class TagSetClass
-
-    include Virtus
-
-
-    def self.find_in_drawing
-      # drawing.scan_graphical
-      # if graphical.has_tagset
-      #   return element
-    end
-
-    def to_ole
-    end
-
-    def from_ole
-    end
-
-
-  end
 
   class TagSets
     include Enumerable
@@ -36,15 +18,17 @@ module Microstation
       result
     end
 
+    def to_s
+      "Tagsets: #{tagsets.to_s}"
+    end
+
     def reset
       @tagsets = nil
     end
 
-
     def tagsets
       @tagsets ||= init_ts
     end
-
 
     def each
       tagsets.each do |obj|
@@ -57,7 +41,9 @@ module Microstation
       tagsets.find{|ts| ts.name == name}
     end
 
-
+    def last
+      tagsets[-1]
+    end
 
     def [](name)
       find(name)
@@ -80,14 +66,110 @@ module Microstation
     def create(name)
       raise if self[name]
       ole = @ole_obj.add(name)
+      definer = Definer.new(ole)
+      yield definer if block_given?
       @tagsets = init_ts
       ts = self[name]
       raise if ts.nil?
+      definer = nil
       ts
     end
 
     def size
       tagsets.size
+    end
+
+  end
+
+  class Definer
+
+    attr_reader :tagset
+
+    def initialize(tagset)
+      @tagset = tagset
+    end
+
+
+    def add_attribute(name,type,options = {})
+      ole_td = create_ole_definition(name, type)
+      td = TS::Attribute.new(ole_td)
+      td.prompt = options[:prompt] || name
+      td.hidden = options[:is_hidden]
+      td.constant = options[:is_constant] || false
+      td.default = options[:default] if options[:default]
+      #td.hidden = td.fetch(:is_hidden)
+      yield td if block_given?
+      td
+    end
+
+    private
+
+    def tag_definitions
+      tagset.ole_tag_definitions
+    end
+
+    def close
+
+    end
+
+    def ole_type(type)
+      TS::Attribute.tag_type(type)
+    end
+
+    def create_ole_definition(name,type)
+      tag_definitions.Add(name,ole_type(type))
+    end
+
+  end
+
+  class Definition
+
+    attr_reader :tagset
+
+    def initialize(tagset)
+      @tagset = tagset
+    end
+
+    def add_attribute(name,type,options={})
+      td = definer.add_attribute(name,type,options)
+      reset
+      td
+    end
+
+    def definer
+      @definer ||= Definer.new(tagset)
+    end
+
+    def ole_tag_definitions
+      tagset.ole_tag_definitions
+    end
+
+    def init_definitions
+      results = []
+      ole_tag_definitions.each do |ole|
+        results << TS::Attribute.new(ole, {definer: self})
+      end
+      results
+    end
+
+    def attributes
+      @attributes ||= init_definitions
+    end
+
+    def attribute_names
+      attributes.map{|a| a.name}
+    end
+
+    def reset
+      @attributes = nil
+    end
+
+    def close
+      attributes.each{| a| a.close}
+    end
+
+    def [](name)
+      attributes.find{|d| d.name == name}
     end
 
   end
@@ -98,14 +180,70 @@ module Microstation
 
     def initialize(ole)
       @ole_obj = ole
+      @instances = []
+    end
+
+    def instances
+      Microstation.app.current_drawing.find_tagset_instances(self.name)
+    end
+
+
+    def add_attribute(name,type,options={})
+      definition.add_attribute(name,type,options)
+    end
+
+    def definer
+      @definer ||= Definer.new(self)
     end
 
     def ole_tag_definitions
-      @tag_definitions = @ole_obj.TagDefinitions
+      @ole_obj.TagDefinitions
     end
+
+
+
+    # def ole_tag_definitions
+    #   @tag_definitions = @ole_obj.TagDefinitions
+    # end
 
     def reset
       @tag_definitions = nil
+    end
+
+    def add_instance(array)
+      @instances << TS::Instance.new(self,array)
+    end
+
+    def create_instance(group)
+      TS::Instance.new(self,group)
+    end
+
+    def instances(drawing = Microstation.app.current_drawing)
+      @instances = create_instances(drawing.scan_tags)
+    end
+
+    def create_instances(tags)
+      mytags = tags_for_self(tags)
+      grouped = grouped_tags_to_host(mytags)
+      grouped.map{|group| create_instance(group)}
+    end
+
+    def tags_for_self(tags)
+      tags.select{|t| t.tagset_name == name}
+    end
+
+    def grouped_tags_to_host(tags)
+      tags.group_by{|t| t.base_element_id}.values
+    end
+
+
+    def all_tags_in_drawing
+      Microstation.app.current_drawing.scan_tags
+    end
+
+
+    def definition
+      @definition ||= Definition.new(self)
     end
 
     def close
@@ -125,186 +263,18 @@ module Microstation
       @ole_obj == other.ole_obj
     end
 
-    def each
-      return to_enum unless block_given?
-      ole_tag_definitions.each do |ole|
-        yield TagDefinition.new(self,ole)
-      end
+    def attribute_names
+      definition.attribute_names
+    end
+
+    def attributes
+      definition.attributes
     end
 
     def [](name)
-      self.definitions.find{|d| d.name == name}
-    end
-
-    def make_mapper(name = self.name)
-      atts = self.definitions
-      m = Class.new(TagSetClass) do
-        atts.each do |td|
-          attribute(td.name, td.type, td.attrib_options)
-        end
-      end
-    end
-
-    def definitions
-      result = []
-      each do |td|
-        result << td
-      end
-      result
-    end
-
-    def create_ole_definition(name,type)
-      ole_type =  TagDefinition.tag_type(type)
-      ole_tag_definitions.Add(name,ole_type)
-    end
-
-
-    def definition(name,type,options = {})
-      ole_td = create_ole_definition(name, type)
-      td = TagDefinition.new(self,ole_td)
-      td.prompt = options[:prompt] || name
-      td.hidden = options[:is_hidden]
-      td.constant = options[:is_constant] || false
-      td.default = options[:default] if options[:default]
-      #td.hidden = td.fetch(:is_hidden)
-      yield td if block_given?
-      td
+      definition[name]
     end
 
   end
-
-
-
-  class TagDefinition
-
-    attr_reader :ole_obj
-
-
-    #   msdTagTypeCharacter 1 (&H1)
-    # msdTagTypeShortInteger 2 (&H2)
-    # msdTagTypeLongInteger 3 (&H3)
-    # msdTagTypeDouble 4 (&H4)
-    # msdTagTypeBinary 5 (&H5)
-
-
-    TYPES = {
-      1 => String,
-      2 => Integer,
-      3 => Integer,
-      4 => Float,
-      #   5 => Binary
-    }
-
-    RUBY_TO_MS = TYPES.invert
-
-    def self.tag_type(type)
-      if type.class == Symbol
-        ruby_type = case type
-                    when :char
-                      String
-                    when :int
-                      Integer
-                    when :float
-                      Float
-                    else
-                      :char
-                    end
-      else
-        ruby_type = type
-      end
-
-      RUBY_TO_MS[ruby_type]
-    end
-
-    def att_type
-      TYPES[type]
-    end
-
-    def initialize(tagset,ole)
-      @tagset = tagset
-      @ole_obj = ole
-    end
-
-    def name
-      @ole_obj.name
-    end
-
-    def name=(val)
-      @ole_obj.Name = val
-    end
-
-    def tagset_name
-      @tagset.name
-    end
-
-    def options_for_attribute
-      options = {}
-      options[:is_hidden] = true if hidden?
-      options[:prompt] = prompt if prompt
-      options[:default] = default_value
-      options[:readonly] = true if constant?
-    end
-
-    def to_s
-      "TagDefinition: #{name}"
-    end
-
-    def constant?
-      @ole_obj.IsConstant
-    end
-
-    def constant=(constant)
-      bool = constant ? true : false
-      @ole_obj.IsConstant = bool
-    end
-
-    def default
-      @ole_obj.DefaultValue
-    end
-
-    def default=(val)
-      @ole_obj.DefaultValue = val
-    end
-
-    def has_default?
-      !!default
-    end
-
-    def hidden?
-      @ole_obj.IsHidden
-    end
-
-    def hidden=(hidden)
-      bool =  hidden ? true :false
-      @ole_obj.IsHidden = bool
-    end
-    def prompt
-      @ole_obj.Prompt
-    end
-
-    def prompt=(val)
-      @ole_obj.Prompt = val
-    end
-
-    def type
-      TYPES[@ole_obj.TagType]
-    end
-
-    def attrib_options
-      options = {}
-      options[:default] = default_value if has_default?
-      options[:readonly] = true if constant?
-      options
-    end
-
-    def ==(other)
-      @ole_obj.Name == other.ole_obj.Name  && @ole_obj.TagSetName == other.ole_obj.TagSetName && @ole_obj.TagType == other.ole_obj.TagType
-    end
-
-
-
-  end
-
-
 
 end

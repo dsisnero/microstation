@@ -1,6 +1,7 @@
 require File.join(File.dirname(__FILE__) ,  'spec_helper')
 require 'tempfile'
 
+
 module Helper
 
   def create_temp_drawing
@@ -15,7 +16,6 @@ end
 describe Microstation::TagSet do
 
   include Helper
-
 
   before(:all) do
     @app = Microstation::App.new
@@ -54,10 +54,7 @@ describe Microstation::TagSet do
         tagsets.should be_empty
       end
 
-
     end
-
-
   end
 
   describe 'A Tag Set' do
@@ -80,15 +77,16 @@ describe Microstation::TagSet do
       context 'given a new TagSet' do
         let(:tagset){ new_drawing.create_tagset('faatitle')}
 
-        it 'should have no tag_definitions' do
-          tagset.definitions.should be_empty
+        it 'should have no attributes' do
+          tagset.attributes.should be_empty
         end
 
         it 'should allow you to add new definitions' do
-          tagset.definitions.should be_empty
-          td = tagset.definition('title', String, :prompt => 'My title')
+          tagset.attributes.should be_empty
+          td = tagset.add_attribute('title', String, :prompt => 'My title')
+
           td.prompt.should == 'My title'
-          tagset.definitions.size.should == 1
+          tagset.attributes.size.should == 1
         end
 
       end
@@ -100,22 +98,19 @@ describe Microstation::TagSet do
        # let(:td2){ tagset.definition('city', String)}
 
         it 'should have correct size' do
-          tagset.definitions.size.should == 0
-          tagset.definition('title', String)
-          tagset.definitions.size.should == 1
-          tagset.definition('city',String)
-          tagset.definitions.size.should == 2
+          tagset.attributes.size.should == 0
+          tagset.add_attribute('title', String)
+          tagset.attributes.size.should == 1
+          tagset.add_attribute('city',String)
+          tagset.attributes.size.should == 2
         end
 
         it 'should allow you to retrieve a td' do
-          td = tagset.definition('title', String)
+          td = tagset.add_attribute('title', String)
           tagset['title'].should == td
         end
       end
     end
-
-
-
 
   end
 

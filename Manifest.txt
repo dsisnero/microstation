@@ -1,5 +1,6 @@
 .autotest
 .rspec
+Gemfile
 History.txt
 Manifest.txt
 README.txt
@@ -14,6 +15,7 @@ lib/microstation/dir.rb
 lib/microstation/drawing.rb
 lib/microstation/enumerator.rb
 lib/microstation/ext/pathname.rb
+lib/microstation/extensions/hash.rb
 lib/microstation/pdf_support.rb
 lib/microstation/properties.rb
 lib/microstation/scan/color.rb
@@ -30,6 +32,8 @@ lib/microstation/tag_set.rb
 lib/microstation/template.rb
 lib/microstation/text.rb
 lib/microstation/text_node.rb
+lib/microstation/ts/attribute.rb
+lib/microstation/ts/instance.rb
 lib/microstation/types.rb
 lib/microstation/wrap.rb
 plot/pdf-bw.plt
@@ -42,7 +46,9 @@ spec/app_spec.rb
 spec/configuration_spec.rb
 spec/drawing_spec.rb
 spec/drawings/new_drawing.dgn
+spec/drawings/test.dgn
 spec/drawings/test1.dgn
+spec/drawings/testfile.pdf
 spec/enumerator_spec.rb
 spec/microstation_spec.rb
 spec/scanner_spec.rb

@@ -21,8 +21,6 @@ module Windows
   end
 end
 
-
-
 module Microstation
 
   module MSD
@@ -128,7 +126,6 @@ module Microstation
       template = nil
     end
 
-
     def open_drawing(filename,options = {})
       filename = Pathname(filename)
       raise FileNotFound unless filename.file?
@@ -230,7 +227,7 @@ module Microstation
     end
 
     def find_by_id(id)
-      model = active_model_reference.GetElementById(id)
+      model = active_model_reference.GetElementById64(id)
       wrap(model)
     end
 

@@ -16,7 +16,7 @@ module Microstation
     end
 
     def to_s
-      "#{name}: #{value}"
+      "#{name}: #{value} ts ->#{tagset_name}"
     end
 
     def value
@@ -24,6 +24,10 @@ module Microstation
     end
 
     def tagset
+      @ole_obj.TagSetName
+    end
+
+    def tagset_name
       @ole_obj.TagSetName
     end
 
@@ -40,23 +44,13 @@ module Microstation
       @ole_obj.BaseElement
     end
 
+    def base_element_id
+      ole_base_element.ID64
+    end
 
     def base_element
       @base_element ||= TaggedElement.new(ole_base_element)
     end
-
-    # def _update(value)
-    #   oldvalue = @original
-    #   return if value == oldvalue
-    #   begin
-    #     update_ole(value)
-    #     @ole_obj.Redraw Microstation::MSD::MsdDrawingModeNormal
-    #     @ole_obj.Rewrite
-    #     @original = value
-    #   rescue
-    #     _update(oldvalue)
-    #   end
-    # end
 
   end
 

@@ -1,18 +1,16 @@
 require_relative 'properties'
-
+require 'pry'
 module Microstation
 
   class Drawing
 
     include Properties
 
-
     attr_reader :app
 
     def initialize(app, ole)
       @app = app
       @ole_obj = ole
- #     self.author = app.username
     end
 
     def active?
@@ -73,28 +71,6 @@ module Microstation
       app.scan(sc,&block)
     end
 
-    def scan_tagset(name,&block)
-      result = []
-      temp = scan_tags.select{|t| t.TagSetName == name}.group_by{|t| t.BaseElement.ID64}
-      temp.each do |k,tagarray|
-        ole = tagarray.first.ole_base_element
-        tagged_element = TaggedElement.new(ole)
-        ts = tagged_element.add_tagset(name,tagarray)
-        yield ts if block
-        result << ts
-      end
-      result unless block
-    end
-
-    def save
-      @ole_obj.Save
-    end
-
-
-    def find_tagset(name)
-      scan_tagset(name).first
-    end
-
     def modified_date
       @ole_obj.DateLastSaved
     end
@@ -120,7 +96,7 @@ module Microstation
       @ole_obj.Name
     end
 
-     def basename
+    def basename
       Pathname(name)
     end
 
@@ -182,9 +158,27 @@ module Microstation
       tagsets.remove(name)
     end
 
+    def find_tagset(name)
+      ts = tagsets[name]
+      ts.create_instances(scan_tags)
+    end
+
     protected
     def ole_obj_tagsets
       @ole_obj.TagSets
+    end
+
+    def ensure_tags(tags)
+      tags.map{|t| t.class == WIN32OLE ? app.wrap(t) : t }
+    end
+
+    # def create_tagset_instances(name,groups)
+    #   ts = tagsets[name]
+    #   ts.add_instance(group) if ts
+    # end
+
+    def save
+      @ole_obj.Save
     end
 
 
