@@ -1,4 +1,5 @@
 require 'win32ole'
+require 'microstation/file_tests'
 require 'microstation/app'
 require 'microstation/drawing'
 require 'microstation/configuration'
