@@ -6,6 +6,9 @@ Manifest.txt
 README.txt
 Rakefile
 bin/dgn2pdf
+cad_files/drawing_no_block.dgn
+cad_files/drawing_with_block.dgn
+cad_files/test.dgn
 lib/microstation.rb
 lib/microstation/app.rb
 lib/microstation/attributes.rb
@@ -14,8 +17,9 @@ lib/microstation/configuration.rb
 lib/microstation/dir.rb
 lib/microstation/drawing.rb
 lib/microstation/enumerator.rb
+lib/microstation/errors.rb
 lib/microstation/ext/pathname.rb
-lib/microstation/extensions/hash.rb
+lib/microstation/file_tests.rb
 lib/microstation/pdf_support.rb
 lib/microstation/properties.rb
 lib/microstation/scan/color.rb
@@ -45,11 +49,8 @@ plot/wmcolor.tbl
 spec/app_spec.rb
 spec/configuration_spec.rb
 spec/drawing_spec.rb
-spec/drawings/new_drawing.dgn
-spec/drawings/test.dgn
-spec/drawings/test1.dgn
-spec/drawings/testfile.pdf
 spec/enumerator_spec.rb
+spec/microstation/file_tests_spec.rb
 spec/microstation_spec.rb
 spec/scanner_spec.rb
 spec/spec_app.rb

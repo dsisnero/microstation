@@ -17,7 +17,7 @@ require 'microstation/dir'
 require 'erb'
 
 module Microstation
-  VERSION = '0.4.1'
+  VERSION = '0.5.0'
 
   def self.root
     Pathname.new( File.dirname(__FILE__)).parent
