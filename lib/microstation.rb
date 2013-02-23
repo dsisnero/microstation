@@ -76,6 +76,16 @@ module Microstation
     Microstation::App.with_drawings(*files,&block)
   end
 
+  def self.scan_text(file,&block)
+    Microstation.open_drawing(file) do |d|
+      d.scan_text(&block)
+    end
+  end
+
+  def self.get_text(file)
+    Microstation.open_drawing(file){|d| d.get_text}
+  end
+
   def self.run(options={}, &block)
     options = {:visible => false}.merge(options)
     begin
