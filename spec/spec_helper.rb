@@ -37,4 +37,14 @@ def open_existing_drawing(app)
   app.open_drawing( drawing_path('test.dgn'))
 end
 
+def text_for_drawing_with_block
+  ["text1 {{ a1 }}",
+   "text2 {{ a2 }}",
+   "text3 {{ a3 }}",
+   "node1 {{ a4 }}\nnode1 {{ a5 }}",
+   "node2 {{ a7 }}\nnode2 {{ a7 }}",
+   "text a1 again {{ a1 }}"
+  ]
+end
+
 

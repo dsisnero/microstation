@@ -64,6 +64,14 @@ module Microstation
       app.scan(sc,&block)
     end
 
+    def get_text
+      result = []
+      scan_text do |t|
+        result << t.to_s
+      end
+      result
+    end
+
     def scan_tags(&block)
       sc = create_scanner do
         include_tags

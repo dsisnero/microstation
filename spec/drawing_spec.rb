@@ -202,8 +202,25 @@ describe Microstation::Drawing do
       end
     end
 
+    describe "#get_text" do
+      let(:file_name){ 'drawing_with_block.dgn'}
+      let(:drawing_file){ drawing_path(file_name)}
+      let(:drawing_no_text_file){ drawing_path( 'drawing_no_block.dgn')}
+      let(:drawing_no_text){ app.open_drawing(drawing_no_text_file)}
+      let(:drawing){ app.open_drawing(drawing_file)}
+      let(:app){ @app}
+
+      it 'returns empty array if text has no text' do
+        expect( drawing_no_text.get_text).to eq([])
+      end
+
+      it 'gets all the text if drawing has text' do
+        text_in_drawing = text_for_drawing_with_block()
+        expect( drawing.get_text).to eq( text_for_drawing_with_block() )
+      end
 
 
+    end
   end
 end
 
