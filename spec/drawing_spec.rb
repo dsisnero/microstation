@@ -17,7 +17,6 @@ describe Microstation::Drawing do
 
     before(:all) do
       @app = Microstation::App.new
-      #     debugger
       @drawing_name = 'my_new_drawing.dgn'
       @new_drawing_path = create_new_drawing_path('my_new_drawing.dgn')
       @new_drawing = @app.new_drawing(@new_drawing_path)
@@ -33,7 +32,140 @@ describe Microstation::Drawing do
     let(:new_drawing_path) { @new_drawing_path }
     let(:new_drawing_name) {@drawing_name}
 
-    # describe "#name and path" do
+    it "should be the active drawing" do
+      new_drawing.should be_active
+    end
+
+    describe "#author" do
+
+      it "should be '' to start" do
+        pending
+        new_drawing.author.should == ""
+      end
+
+      it "should set author if given a new author" do
+        new_drawing.author = "A newer author"
+        new_drawing.author.should == "A newer author"
+      end
+
+    end
+
+    describe "#title" do
+      it "should be '' to start" do
+        new_drawing.title.should == ""
+      end
+
+      it "should set title if given a new title" do
+        new_drawing.title = "a new title"
+        new_drawing.title.should == "a new title"
+      end
+
+    end
+
+    describe "#keywords" do
+      it "should be empty to start" do
+        new_drawing.keywords.should == ""
+      end
+
+      it "should set keywords if given a string of words" do
+        new_drawing.keywords = "project, rcl, new"
+        new_drawing.keywords.should == "project, rcl, new"
+      end
+    end
+
+    it "should have a #comments method" do
+      new_drawing.comments.should == ""
+      new_drawing.comments = "these are the comments"
+      new_drawing.comments.should == "these are the comments"
+    end
+
+    it "should have a two_d? method" do
+      new_drawing.should be_two_d
+    end
+
+    it "should be able to save as pdf" do
+      new_drawing.save_as_pdf
+    end
+
+    describe "revision count" do
+      it "should have a revision_count" do
+        new_drawing.should respond_to "revision_count"
+      end
+
+      it "should forward method" do
+        new_drawing.ole_obj.should_receive("DesignRevisionCount").and_return(0)
+        new_drawing.revision_count
+      end
+    end
+
+    describe "pdf_name" do
+      it "should be the passed in dirname + name with pdf changed for ext" do
+        new_drawing.pdf_name("my_name","output").to_s.should == File.expand_path(File.join('output', "my_name.pdf"))
+      end
+
+      it "should == the name of the drawing file #basename with pdf ext with no args" do
+        new_drawing.stub(:basename).and_return "Drawing Name"
+        File.extname(new_drawing.pdf_name).should == '.pdf'
+        File.basename(new_drawing.pdf_name, '.pdf').should == "Drawing Name"
+      end
+
+    end
+
+    context "save_as_pdf" do
+      it "should use the filename if given in args" do
+        new_drawing.save_as_pdf("testfile")
+      end
+    end
+
+    describe "scanning" do
+
+      it "should have a #create_scanner" do
+        scanner = new_drawing.create_scanner
+        scanner.include_textual
+      end
+
+      it "should scan the drawing" do
+        scanner = new_drawing.create_scanner do |scan|
+          scan.include_textual
+        end
+        new_drawing.scan(scanner)
+      end
+    end
+
+    describe "#scan_text" do
+
+      it "only yields textual items" do
+
+        new_drawing.scan_text do |item|
+          item.class.should == (Microstation::Text || Microstation::TextNode)
+        end
+      end
+    end
+
+    describe "#get_text" do
+      let(:file_name){ 'drawing_with_block.dgn'}
+      let(:drawing_file){ drawing_path(file_name)}
+      let(:drawing_no_text_file){ drawing_path( 'drawing_no_block.dgn')}
+      let(:drawing_no_text){ app.open_drawing(drawing_no_text_file)}
+      let(:drawing){ app.open_drawing(drawing_file)}
+      let(:app){ @app}
+
+      it 'returns empty array if text has no text' do
+        expect( drawing_no_text.get_text).to eq([])
+      end
+
+      it 'gets all the text if drawing has text' do
+        text_in_drawing = text_for_drawing_with_block()
+        expect( drawing.get_text).to eq( text_for_drawing_with_block() )
+      end
+
+
+    end
+  end
+end
+
+
+ # describe "#name and path" do
 
 
 
@@ -86,176 +218,33 @@ describe Microstation::Drawing do
     #   end
     # end
 
-    it "should be the active drawing" do
-      new_drawing.should be_active
-    end
+  # describe "#new_drawing" do
+  #   before(:each) do
+  #     ENV["USERNAME"] = "test person"
+  #   end
 
-    describe "#author" do
+  #   after(:each) do
+  #     @drawing.close
+  #     @drawing =  nil
+  #   end
 
-      it "should be '' to start" do
-         pending
-        new_drawing.author.should == ""
-      end
+  #   it "should set author" do
+  #     @app.should_receive(:username).and_return("test person")
+  #     @drawing = @app.new_drawing(new_drawing_path)
+  #     @drawing.author.should == "test person"
+  #   end
 
-      it "should set author if given a new author" do
-        new_drawing.author = "A newer author"
-        new_drawing.author.should == "A newer author"
-      end
+  # end
 
-    end
+  # describe "creating  a new drawing" do
+  #   before(:each) do
+  #     @drawing = @app.new_drawing(new_drawing_path)
+  #   end
 
-    describe "#title" do
-      it "should be '' to start" do
-        new_drawing.title.should == ""
-      end
-
-      it "should set title if given a new title" do
-        new_drawing.title = "a new title"
-        new_drawing.title.should == "a new title"
-      end
-
-    end
-
-    describe "#keywords" do
-      it "should be empty to start" do
-        new_drawing.keywords.should == ""
-      end
-
-      it "should set keywords if given a string of words" do
-        new_drawing.keywords = "project, rcl, new"
-        new_drawing.keywords.should == "project, rcl, new"
-      end
-    end
-
-
-    it "should have a #comments method" do
-      new_drawing.comments.should == ""
-      new_drawing.comments = "these are the comments"
-      new_drawing.comments.should == "these are the comments"
-    end
-
-
-
-
-    it "should have a two_d? method" do
-      new_drawing.should be_two_d
-    end
-
-    it "should be able to save as pdf" do
-      new_drawing.save_as_pdf
-    end
-
-    describe "revision count" do
-      it "should have a revision_count" do
-        new_drawing.should respond_to "revision_count"
-      end
-
-      it "should forward method" do
-        new_drawing.ole_obj.should_receive("DesignRevisionCount").and_return(0)
-        new_drawing.revision_count
-      end
-    end
-
-    describe "pdf_name" do
-      it "should be the passed in dirname + name with pdf changed for ext" do
-        new_drawing.pdf_name("my_name","output").to_s.should == File.expand_path(File.join('output', "my_name.pdf"))
-      end
-
-      it "should == the name of the drawing file #basename with pdf ext with no args" do
-        new_drawing.stub(:basename).and_return "Drawing Name"
-        File.extname(new_drawing.pdf_name).should == '.pdf'
-        File.basename(new_drawing.pdf_name, '.pdf').should == "Drawing Name"
-      end
-
-    end
-
-
-    context "save_as_pdf" do
-      it "should use the filename if given in args" do
-        new_drawing.save_as_pdf("testfile")
-      end
-    end
-
-    describe "scanning" do
-
-    it "should have a #create_scanner" do
-      scanner = new_drawing.create_scanner
-      scanner.include_textual
-      end
-
-      it "should scan the drawing" do
-        scanner = new_drawing.create_scanner do |scan|
-          scan.include_textual
-        end
-        new_drawing.scan(scanner)
-      end
-    end
-
-
-    describe "#scan_text" do
-
-      it "only yields textual items" do
-
-        new_drawing.scan_text do |item|
-          item.class.should == (Microstation::Text || Microstation::TextNode)
-        end
-      end
-    end
-
-    describe "#get_text" do
-      let(:file_name){ 'drawing_with_block.dgn'}
-      let(:drawing_file){ drawing_path(file_name)}
-      let(:drawing_no_text_file){ drawing_path( 'drawing_no_block.dgn')}
-      let(:drawing_no_text){ app.open_drawing(drawing_no_text_file)}
-      let(:drawing){ app.open_drawing(drawing_file)}
-      let(:app){ @app}
-
-      it 'returns empty array if text has no text' do
-        expect( drawing_no_text.get_text).to eq([])
-      end
-
-      it 'gets all the text if drawing has text' do
-        text_in_drawing = text_for_drawing_with_block()
-        expect( drawing.get_text).to eq( text_for_drawing_with_block() )
-      end
-
-
-    end
-  end
-end
-
-
-
-
-
-
-    # describe "#new_drawing" do
-    #   before(:each) do
-    #     ENV["USERNAME"] = "test person"
-    #   end
-
-    #   after(:each) do
-    #     @drawing.close
-    #     @drawing =  nil
-    #   end
-
-    #   it "should set author" do
-    #     @app.should_receive(:username).and_return("test person")
-    #     @drawing = @app.new_drawing(new_drawing_path)
-    #     @drawing.author.should == "test person"
-    #   end
-
-    # end
-
-    # describe "creating  a new drawing" do
-    #   before(:each) do
-    #     @drawing = @app.new_drawing(new_drawing_path)
-    #   end
-
-    #   after(:each) do
-    #     @drawing.close
-    #     @drawing = nil
-    #   end
+  #   after(:each) do
+  #     @drawing.close
+  #     @drawing = nil
+  #   end
 
 
 
