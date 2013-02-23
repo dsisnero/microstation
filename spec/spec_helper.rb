@@ -28,6 +28,11 @@ def drawing_path(file)
   File.expand_path(drawing)
 end
 
+def output_path(file)
+  (OUTPUT_DIR + file).expand_path.to_s
+end
+
+
 def open_existing_drawing(app)
   app.open_drawing( drawing_path('test.dgn'))
 end
