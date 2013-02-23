@@ -21,6 +21,7 @@ Hoe.spec 'microstation' do
   dependency('liquid', '> 0.0.0')
   dependency('virtus', '> 0.0.0')
   dependency('pry-nav', '>0.0.0',:dev)
+  dependency('hash_maps','>0.0.0')
 
   # self.rubyforge_name = 'microstation' # if different than 'microstation'
 end

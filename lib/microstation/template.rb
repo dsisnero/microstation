@@ -2,6 +2,7 @@ require 'erb'
 require 'liquid'
 require 'fileutils'
 require File.join(File.dirname(__FILE__), 'extensions/hash')
+require 'hash_maps'
 module Microstation
 
   class Template
@@ -37,6 +38,7 @@ module Microstation
        scope = scope.to_h if scope.respond_to?(:to_h)
       if scope.kind_of? Hash
         scope = scope.map_k{|k| k.to_s}
+        scope = scope.map_keys{|k| k.to_s}
       end
       scope
     end
