@@ -9,6 +9,11 @@ module Microstation
       @original_text = ole_to_ruby(ole)
     end
 
+    def to_regexp
+      Regexp.new(original_text.to_s)
+    end
+
+
     def empty?
       ole_obj.TextLinesCount == 0
     end

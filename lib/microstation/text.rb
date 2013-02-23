@@ -7,6 +7,11 @@ module Microstation
       @original_text = @ole_obj.Text
     end
 
+    def to_regexp
+      Regexp.new(@original_text.to_s)
+    end
+
+
     # def microstation_id
     #   @ole_obj.Id || @ole_obj.ID64
     # end
