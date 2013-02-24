@@ -37,23 +37,21 @@ module Microstation
       puts "Printed drawing #{newname}"
     end
 
-    def render(context,locals={}, output)
-      with_tempfile(output){|f| run_once(context,locals,f)}
+    def render(output, locals={})
+      with_tempfile(output){|tmp| run_once(tmp,locals)}
     end
 
     def outfile_name(output_dir)
       File.join(output_dir, filename)
     end
 
-    def app_render(app,context,locals={},ouput)
-      with_tempfile{|f| run_with_app(app,context,locals,output)}
+    def app_render(app,output,locals={})
+      with_tempfile(output){|tmp| run_with_app(app,tmp, locals)}
     end
 
-    def add_binding(scope,locals={},&block)
+    def add_binding(locals={},&block)
       tagsets = locals.fetch(:tagsets,{})
       nlocals = normalize_hash(locals)
-      nscope = normalize_hash(scope)
-      nlocals = locals.merge(nscope)
       nlocals['yield'] = block.nil? ? '' : yield
       nlocals['content'] = nlocals['yield']
       [nlocals,tagsets]
@@ -118,17 +116,17 @@ module Microstation
       end
     end
 
-    def run_with_app(app, context,locals,file)
+    def run_with_app(app,file,locals)
       app.new_drawing(file,@template) do |drawing|
-        scope,tagsets = add_binding(context,locals)
+        scope,tagsets = add_binding(locals)
         update_tagsets(drawing,tagsets)
         update_text(drawing,scope)
       end
     end
 
-    def run_once(context,locals={},file)
+    def run_once(file,locals={})
       Microstation.run do |app|
-        run_with_app(app,context,locals,file)
+        run_with_app(app,file,locals)
       end
     end
 

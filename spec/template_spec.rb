@@ -118,7 +118,7 @@ module Microstation
         subject{ template }
 
         it "it doesn't error" do
-          expect{ template.render({},{},OUTPUT_DIR)}.to_not raise_error
+          expect{ template.render(OUTPUT_DIR)}.to_not raise_error
         end
 
         it 'creates a file' do
@@ -128,7 +128,7 @@ module Microstation
 
         it "changes text" do
           pending
-          template.render({"a1" => 'change 1', "a2" => 'change 2',"a3"=>'c3',"a4" =>'c4'},{},OUTPUT_DIR)
+          template.render({"a1" => 'change 1', "a2" => 'change 2',"a3"=>'c3',"a4" =>'c4'},OUTPUT_DIR)
 
           text = Microstation.get_text(out_name)
           ["text change 1/ntext change 2", "text3 c3\ntext3 c4"].each do |t|
@@ -159,12 +159,12 @@ module Microstation
 
 
           it "doesn't change input file" do
-            template.render(locals,{},OUTPUT_DIR)
+            template.render(OUTPUT_DIR,locals)
             expect( FileUtils.compare_file( drawing_file, copied_file)).to be_true
           end
 
           it "changes the output" do
-            template.render(locals,{},OUTPUT_DIR)
+            template.render(OUTPUT_DIR,locals)
             expect(  FileUtils.compare_file(output_file, copied_file)).to_not be_true
           end
 
