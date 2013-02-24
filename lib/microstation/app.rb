@@ -50,6 +50,10 @@ module Microstation
       end
     end
 
+    def render_template(drawing,output_dir,locals = {})
+      Template.new(drawing).app_render(self,output_dir,locals)
+    end
+
     def self.with_drawings(*files,&block)
       files = files[0] if files[0].kind_of?  Array
       opts = {:read_only => true}
@@ -269,11 +273,7 @@ module Microstation
     def active_model_reference
       @ole_obj.ActiveModelReference rescue nil
     end
-
     private
-
-
-
 
     def init_cad_input_queue
       Microstation::CadInputQueue.new(@ole_obj.CadInputQueue)

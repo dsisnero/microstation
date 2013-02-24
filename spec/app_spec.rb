@@ -213,6 +213,20 @@ describe "Microstation::App" do
 
   end
 
+  describe 'render_template' do
+    pending
+    let(:dwg_with_block){ 'drawing_with_block.dgn'}
+    let(:drawing_file){ drawing_path(dwg_with_block)}
+    let(:output_dir){ output_path()}
+    let(:output_file){ output_path( 'drawing_with_block.dgn')}
+
+    it "doesn't error with a good template" do
+      expect{ app.render_template(drawing_file,output_dir)}.to_not raise_error
+    end
+
+  end
+
+
   describe "an app with an open drawing" do
     before(:each) do
       @drawing = app.new_drawing(@new_drawing_path)
@@ -241,27 +255,15 @@ describe "Microstation::App" do
 
     end
 
-    # describe "#current_drawing" do
-    #   it "returns the current drawing" do
-    #     binding.pry
-    #     app.current_drawing.should == @drawing
-    #   end
-
-    # end
-
-
-
+    # TODO define a equals method for drawing for same path
+    # win320ole objects aren't considered equal?
+    describe '#current drawing' do
+      it 'returns the current drawing' do
+        app.current_drawing.path.should == @drawing.path
+      end
+    end
 
   end
-
-  # it "forwards method missing" do
-
-  #   @app.ole_obj.should_receive("Open")
-  #   @app.Open("this is a drawing")
-
-
-  # end
-
 
 end
 
