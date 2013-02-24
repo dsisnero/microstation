@@ -28,8 +28,13 @@ def drawing_path(file)
   File.expand_path(drawing)
 end
 
-def output_path(file)
-  (OUTPUT_DIR + file).expand_path.to_s
+def output_path(file=nil)
+  if file
+    (OUTPUT_DIR + file).expand_path.to_s
+  else
+    OUTPUT_DIR
+  end
+
 end
 
 
