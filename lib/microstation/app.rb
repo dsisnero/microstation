@@ -189,7 +189,7 @@ module Microstation
     end
 
     def determine_seed(seedfile)
-      return "seed2d" unless seedfile
+      return configuration['MS_DESIGNSEED'] unless seedfile
       return windows_path( File.expand_path(seedfile))
     end
 

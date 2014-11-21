@@ -18,9 +18,12 @@ describe Microstation do
 
   describe "#run" do
     it "opens up and yields an app" do
+      result = nil
       Microstation.run do |app|
         app.class.should == Microstation::App
+        result = app
       end
+      expect(result).to be_nil
     end
 
     it "can be called with implicit receiver" do
@@ -49,5 +52,3 @@ describe Microstation do
 
   end
 end
-
-
