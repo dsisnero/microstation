@@ -26,6 +26,10 @@ module Microstation
 
     def set(key,value,options = {})
       raise Microstation::VariableDefined unless should_update?(key,options)
+      set!(key,value)
+    end
+
+    def set!(key,value)
       workspace.AddConfigurationVariable(key,value)
     end
 
