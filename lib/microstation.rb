@@ -25,7 +25,7 @@ module Microstation
 
 
   def self.app
-    Microstation::App.new
+    @app ||= Microstation::App.new
   end
 
 
@@ -83,7 +83,11 @@ module Microstation
   end
 
   def self.get_text(file)
-    Microstation.open_drawing(file){|d| d.get_text}
+    result = nil
+    Microstation.open_drawing(file) do |d|
+      result = d.get_text
+    end
+    result
   end
 
   def self.run(options={}, &block)
