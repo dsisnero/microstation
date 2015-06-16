@@ -18,7 +18,7 @@ require 'microstation/ext/win32ole'
 require 'erb'
 
 module Microstation
-  VERSION = '0.5.0'
+  VERSION = '0.8.0'
 
   def self.root
     Pathname.new( File.dirname(__FILE__)).parent
