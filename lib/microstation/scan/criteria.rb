@@ -34,16 +34,19 @@ module Microstation
 
       attr_reader :app
 
-      def self.create_scanner(app,&block)
-        sc = create(app)
+      def self.create_scanner(name, app,&block)
+        sc = create(name=nil,app)
         return sc unless block
         block.arity < 1 ? sc.instance_eval(&block) : block.call(sc)
         sc
       end
 
-      def self.create(app)
+      def self.create(name=nil,app)
         sc = new(app)
-        app.scanners << sc
+        if name.nil?
+          name = "anon#{app.scanners.size + 1}"
+        end
+        app.scanners[name] = sc
         sc
       end
 
@@ -51,7 +54,7 @@ module Microstation
       def initialize(app)
         @app = app
         @ole_obj = @app.create_ole_scan_criteria
-        @app.load_constants #unless defined? Microstation::MSD
+        @app.load_constants # unless defined? Microstation::MSD
       end
 
       def resolve
@@ -65,9 +68,8 @@ module Microstation
       end
 
       def close
-        @ole_obj = nil
         @app.scanners.delete(self) if @app
-        @app = nil
+        @ole_obj = nil
       end
 
       def ole_obj

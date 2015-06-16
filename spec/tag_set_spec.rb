@@ -1,13 +1,13 @@
 require File.join(File.dirname(__FILE__) ,  'spec_helper')
 require 'tempfile'
-
+require 'pry'
 
 module Helper
 
   def create_temp_drawing
     file = Tempfile.new('drawing.dgn')
     file.close
-    @app.new_drawing(file.path)
+    @app.new_drawing(file.path, 'seed2d')
   end
 end
 
@@ -19,6 +19,7 @@ describe Microstation::TagSet do
 
   before(:all) do
     @app = Microstation::App.new
+    config_app(@app)
   end
 
   after(:all) do
@@ -34,24 +35,24 @@ describe Microstation::TagSet do
       let(:tagsets){ new_drawing.tagsets}
 
       it 'should have no initial tagsets' do
-        tagsets['test'].should be_nil
+        expect(tagsets['test']).to be_nil
       end
 
       it 'should return a tagset' do
         ts = tagsets.create('test')
-        ts.should be_instance_of Microstation::TagSet
+        expect(ts).to be_an_instance_of Microstation::TagSet
       end
 
       it 'should be the same as a found tagset' do
         ts = tagsets.create('test')
-        tagsets['test'].should == ts
+        expect(tagsets['test']).to eq(ts)
       end
 
       it 'should allow you to remove a tagset' do
         tagsets.create('test')
-        tagsets.size.should == 1
+        expect(tagsets.size).to eq(1)
         tagsets.remove('test')
-        tagsets.should be_empty
+        expect(tagsets).to be_empty
       end
 
     end
@@ -65,12 +66,12 @@ describe Microstation::TagSet do
 
       it 'should allow you to create' do
         ts = new_drawing.create_tagset('faatitle')
-        ts.should be_instance_of Microstation::TagSet
+        expect(ts).to be_instance_of Microstation::TagSet
       end
 
       it 'should yield to block if given a block' do
         new_drawing.create_tagset('faatitle') do |ts|
-          ts.should be_an_instance_of Microstation::TagSet
+          expect(ts).to be_an_instance_of Microstation::TagSet
         end
       end
 
@@ -78,15 +79,21 @@ describe Microstation::TagSet do
         let(:tagset){ new_drawing.create_tagset('faatitle')}
 
         it 'should have no attributes' do
-          tagset.attributes.should be_empty
+          expect(tagset.attributes).to be_empty
         end
 
         it 'should allow you to add new definitions' do
-          tagset.attributes.should be_empty
+          expect(tagset.attributes).to be_empty
           td = tagset.add_attribute('title', String, :prompt => 'My title')
 
-          td.prompt.should == 'My title'
-          tagset.attributes.size.should == 1
+          expect(td.prompt).to eq('My title')
+          expect(tagset.attributes.size).to eq(1)
+        end
+
+        it 'should be able to be found in drawing' do
+          tagset_local = tagset
+          ts = new_drawing.find_tagset('faatitle')
+          expect(ts.name).to eq(tagset_local.name)
         end
 
       end
@@ -94,30 +101,73 @@ describe Microstation::TagSet do
 
       context 'given a tagset with tag definitions' do
         let(:tagset){ new_drawing.create_tagset('faatitle')}
-      #  let(:td1){ tagset.definition('title',String)}
-       # let(:td2){ tagset.definition('city', String)}
+        #  let(:td1){ tagset.definition('title',String)}
+        # let(:td2){ tagset.definition('city', String)}
 
         it 'should have correct size' do
-          tagset.attributes.size.should == 0
+          expect(tagset.attributes.size).to eq(0)
           tagset.add_attribute('title', String)
-          tagset.attributes.size.should == 1
+          expect(tagset.attributes.size).to eq(1)
           tagset.add_attribute('city',String)
-          tagset.attributes.size.should == 2
+          expect(tagset.attributes.size).to eq(2)
         end
 
         it 'should allow you to retrieve a td' do
           td = tagset.add_attribute('title', String)
-          tagset['title'].should == td
+          expect(tagset['title']).to eq(td)
         end
       end
     end
 
   end
 
+  context 'a drawing with tagsets placed in drawing' do
+    let(:app){ @app }
+    let(:drawing_file){ drawing_path('drawing_with_block.dgn')}
+    let(:drawing){ app.open_drawing(drawing_file)}
+
+
+    it 'has tagsets' do
+      expect( drawing.tagsets).to_not be_empty
+    end
+
+    it 'has the correct tagsets' do
+      model = nil
+      tagsets = nil
+      tsets = drawing.tagsets_in_drawing do |m,ts|
+        model = m
+        tagsets = ts
+      end
+      expect(model).to eq('Default')
+      expect(tagsets.size).to eq(1)
+      ti = tagsets.first
+      expect(tagsets.first.name).to eq('electrical_panel_42')
+    end
+
+    it 'gives correct tagset_hash' do
+      h = drawing.tagsets_in_drawing_to_hash
+      expect(h.keys).to eq(['Default'])
+      expect(h['Default'][0].keys).to eq(['electrical_panel_42'])
+    end
+  end
+
+  context 'a drawing with 3 tagsets placed in drawing' do
+    let(:app){ @app}
+    let(:drawing_file){ drawing_path('drawing_with_3_block.dgn')}
+    let(:drawing){ app.open_drawing(drawing_file)}
+
+    it 'has the correct tagsets' do
+      model =  nil
+      tagsets = nil
+      tsets = drawing.tagsets_in_drawing do |m, ts|
+        model = m
+        tagsets = ts
+      end
+      expect(model).to eq('Default')
+      expect(tagsets.size).to eq(3)
+    end
+  end
+
+
+
 end
-
-
-
-
-
-

@@ -1,7 +1,31 @@
-require File.join(File.dirname(__FILE__) , 'attributes')
+#require File.join(File.dirname(__FILE__) , 'attributes')
 require File.join(File.dirname(__FILE__), 'ts/instance')
 require File.join(File.dirname(__FILE__), 'ts/attribute')
 module Microstation
+
+
+  module OleCollection
+
+    def initialize(ole_col)
+      @ole_obj = ole
+    end
+
+    def [](name)
+      ole_obj(name) rescue nil
+    end
+
+    def each
+      @ole_obj.each do |ts|
+        yield wrap(ts)
+      end
+    end
+
+    def wrap(ts)
+      ts
+    end
+
+  end
+
 
   class TagSets
     include Enumerable
@@ -38,7 +62,7 @@ module Microstation
 
     def find(name)
       return nil if empty?
-      tagsets.find{|ts| ts.name == name}
+      tagsets.detect{|ts| ts.name == name}
     end
 
     def last
@@ -178,15 +202,12 @@ module Microstation
 
     attr_reader :ole_obj
 
+    attr_reader :instances
+
     def initialize(ole)
       @ole_obj = ole
-      @instances = []
+      @instances = {}
     end
-
-    def instances
-      Microstation.app.current_drawing.find_tagset_instances(self.name)
-    end
-
 
     def add_attribute(name,type,options={})
       definition.add_attribute(name,type,options)
@@ -195,16 +216,6 @@ module Microstation
     def definer
       @definer ||= Definer.new(self)
     end
-
-    def ole_tag_definitions
-      @ole_obj.TagDefinitions
-    end
-
-
-
-    # def ole_tag_definitions
-    #   @tag_definitions = @ole_obj.TagDefinitions
-    # end
 
     def reset
       @tag_definitions = nil
@@ -215,11 +226,18 @@ module Microstation
     end
 
     def create_instance(group)
-      TS::Instance.new(self,group)
+      id, elements = group
+      TS::Instance.new(self,id,elements)
     end
 
-    def instances(drawing = Microstation.app.current_drawing)
-      @instances = create_instances(drawing.scan_tags)
+    # def instances(drawing = Microstation.app.current_drawing)
+    #   @instances = create_instances(drawing.scan_tags)
+    # end
+
+    def find_instances_in_model(model)
+      result = create_instances(model.scan_tags)
+      instances[model.name] = result
+      result
     end
 
     def create_instances(tags)
@@ -228,19 +246,9 @@ module Microstation
       grouped.map{|group| create_instance(group)}
     end
 
-    def tags_for_self(tags)
-      tags.select{|t| t.tagset_name == name}
-    end
-
-    def grouped_tags_to_host(tags)
-      tags.group_by{|t| t.base_element_id}.values
-    end
-
-
     def all_tags_in_drawing
       Microstation.app.current_drawing.scan_tags
     end
-
 
     def definition
       @definition ||= Definition.new(self)
@@ -249,7 +257,6 @@ module Microstation
     def close
       @ole_obj = nil
     end
-
 
     def name
       @ole_obj.name
@@ -274,6 +281,21 @@ module Microstation
     def [](name)
       definition[name]
     end
+
+   # protected
+
+     def tags_for_self(tags)
+      tags.select{|t| t.tagset_name == name}
+    end
+
+    def grouped_tags_to_host(tags)
+      tags.group_by{|t| t.base_element_id}
+    end
+
+      def ole_tag_definitions
+      @ole_obj.TagDefinitions
+    end
+
 
   end
 

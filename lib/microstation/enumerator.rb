@@ -5,7 +5,6 @@ module Microstation
   class Enumerator
 
     include Enumerable
-    include Wrap
 
     def initialize(ole)
       @ole_obj = ole
@@ -14,7 +13,7 @@ module Microstation
     def each
       while @ole_obj.MoveNext
         item = @ole_obj.Current
-        yield wrap(item)
+        yield Microstation::Wrap.wrap(item)
       end
     end
 
@@ -22,7 +21,7 @@ module Microstation
       @ole_obj.reset
     end
 
-   
+
 
   end
 

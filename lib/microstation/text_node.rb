@@ -38,11 +38,11 @@ module Microstation
     end
 
     def _update(text)
-      update_ole(text)
+      update_ole!(text)
       @original_text = text
     end
 
-    def update_ole(text)
+    def update_ole!(text)
       ole_obj.DeleteAllTextLines
       text.each_line do |line|
         ole_obj.AddTextLine(line)

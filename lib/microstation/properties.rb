@@ -25,7 +25,11 @@ module Microstation
      alias_method :subject, :subject=
 
     def comments=(var = nil)
-      var ? @ole_obj.Comments = var : @ole_obj.Comments
+      if var
+        @ole_obj.Comments = var
+      else
+        @ole_obj.Comments rescue nil
+      end
     end
 
       alias_method :comments, :comments=

@@ -1,4 +1,4 @@
-require File.join(File.dirname(__FILE__), '../spec_helper')
+require_relative 'spec_helper'
 
 
 class Test
@@ -23,38 +23,37 @@ module Microstation
 
       it "is false for non dwg or dgn files" do
         non_drawing_files.each do |f|
-          expect( subject.drawing_type?(f)).to be_false
+          expect( subject.drawing_type?(f)).to eq false
         end
       end
 
       it "is true for dwg and dgn files" do
         drawing_files.each do |f|
-          expect( subject.drawing_type?(f)).to be_true
+          expect( subject.drawing_type?(f)).to eq true
         end
       end
 
     end
-
 
     describe 'microstation_drawing?' do
 
       it "is false for non dgn files that are files" do
         File.stub(:file?).and_return true
         non_dgn_files.each do |f|
-          expect( subject.microstation_drawing?(f)).to be_false
+          expect( subject.microstation_drawing?(f)).to eq false
         end
       end
 
       it "is true for dgn files that exist" do
         File.stub(:file?).and_return true
         dgn_files.each do |f|
-          expect( subject.microstation_drawing?(f)).to be_true
+          expect( subject.microstation_drawing?(f)).to eq true
         end
       end
 
       it "is false for dgn files that don't exist" do
         dgn_files.each do |f|
-          expect( subject.microstation_drawing?(f)).to be_false
+          expect( subject.microstation_drawing?(f)).to eq false
         end
       end
 
@@ -66,20 +65,20 @@ module Microstation
       it "is false for non drawing files that exist" do
         File.stub(:file?).and_return true
         non_drawing_files.each do |f|
-          expect( subject.drawing?(f)).to be_false
+          expect( subject.drawing?(f)).to eq false
         end
       end
 
       it "is true for drawing files that exist" do
         File.stub(:file?).and_return true
         drawing_files.each do |f|
-          expect( subject.drawing?(f) ).to be_true
+          expect( subject.drawing?(f) ).to eq true
         end
       end
 
       it "is false for drawing_files that don't exist" do
         drawing_files.each do |f|
-          expect( subject.drawing?(f)).to be_false
+          expect( subject.drawing?(f)).to eq false
         end
       end
 
@@ -90,14 +89,3 @@ module Microstation
   end
 
 end
-
-
-
-
-
-
-
-
-
-
-

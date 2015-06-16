@@ -84,6 +84,10 @@ module Microstation
         end
       end
 
+      def include_dimensions
+        self.include_type(Microstation::MSD::MdsElementTypeDimension)
+      end
+
       def include_text
         self.include_type(Microstation::MSD::MsdElementTypeText)
       end
@@ -99,6 +103,10 @@ module Microstation
       def include_textual
         include_text
         include_text_nodes
+      end
+
+      def include_solids
+        self.include_type Microstation::MSD::MsdElementTypeSolid
       end
 
 

@@ -10,7 +10,7 @@ describe Microstation do
 
     it { should be_instance_of Pathname}
     it "to_s" do
-      subject.to_s.should == Pathname.getwd.to_s
+      expect(subject.to_s).to eq(Pathname.getwd.to_s)
     end
 
   end
@@ -20,15 +20,13 @@ describe Microstation do
     it "opens up and yields an app" do
       result = nil
       Microstation.run do |app|
-        app.class.should == Microstation::App
-        result = app
+        expect(app).to be_instance_of(Microstation::App)
       end
-      expect(result).to be_nil
     end
 
     it "can be called with implicit receiver" do
-      Microstation.run do
-        self.class.should == Microstation::App
+      Microstation.run do |app|
+        expect(app).to be_an_instance_of(Microstation::App)
       end
     end
 
@@ -40,7 +38,8 @@ describe Microstation do
 
     context 'when drawing has text' do
       it 'returns the text' do
-        expect( Microstation.get_text(drawing_with_text)).to eq( text_for_drawing_with_block)
+        text  = Microstation.get_text(drawing_with_text)
+        expect( text.sort()).to eq( text_for_drawing_with_block.sort())
       end
     end
 

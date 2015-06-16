@@ -71,7 +71,7 @@ module Microstation
       end
 
       def method_missing(meth,*args,&block)
-       # binding.pry
+        # binding.pry
         base = meth.to_s.sub("=", "")
         if attributes.include?(base)
           if meth.match /(=)/
@@ -105,92 +105,7 @@ module Microstation
 
   end
 
-  class Element
 
-
-    def self.convert_item(item)
-      return item unless item.class == WIN32OLE
-      case item.Type
-      when Microstation::MSD::MsdElementTypeText
-        Microstation::Text.new(item)
-      when Microstation::MSD::MsdElementTypeTextNode
-        Microstation::TextNode.new(item)
-      when Microstation::MSD::MsdElementTypeTag
-        Microstation::Tag.new(item)
-      else
-        new(item)
-      end
-    end
-
-    def self.ole_object?
-      ole.class == WIN32OLE
-    end
-
-
-    attr_reader :ole_obj
-
-    def initialize(ole)
-      @ole_obj = ole
-      @original = ole_value
-    end
-
-    def update_ole(value)
-    end
-
-    def ole_value
-    end
-
-    def text?
-      ole_obj.Type == Microstation::MSD::MsdElementTypeText
-    end
-
-    def text_node?
-      ole_obj.Type  == Microstation::MSD::MsdElementTypeTextNode
-    end
-
-    def has_tags?
-      ole_obj.HasAnyTags
-    end
-
-    def textual?
-      text? || text_node?
-    end
-
-    def microstation_id
-      ole_obj.Id || ole_obj.ID64
-    end
-
-    def Type
-      ole_obj.Type
-    end
-
-    def microstation_type
-      Type
-    end
-
-    def method_missing(meth,*args,&block)
-      if meth.to_s =~ /^[A-Z]/
-        result = ole_obj.send(meth,*args,&block)
-        Element.convert_item(result)
-      else
-        super(meth,*args,&block)
-      end
-    end
-
-    def _update(value)
-      oldvalue = @original
-      return if value == oldvalue
-      begin
-        update_ole(value)
-        @ole_obj.Redraw Microstation::MSD::MsdDrawingModeNormal
-        @ole_obj.Rewrite
-        @original = value
-      rescue
-        _update(oldvalue)
-      end
-    end
-
-  end
 end
 
 module Microstation
@@ -198,7 +113,7 @@ module Microstation
   module Wrap
 
 
-    def wrap(item)
+    def self.wrap(item)
       Element.convert_item(item)
     end
 

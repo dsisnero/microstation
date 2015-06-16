@@ -1,3 +1,25 @@
 #!/usr/bin/env ruby
+require 'optparse'
+require 'methadone'
+require 'microstation'
 
-abort "you need to write me"
+class TemplateApp
+  include Methadone::Main
+  include Methadone::CLILogging
+
+  main do |directory|
+    directory_path = Pathname.new(directory).expand_path
+    exit_now! "arg directory: #{directory_path} doesn't exist" unless directory_path.directory?
+
+    Microstation.dump_template_info(directory_path)
+
+  end
+
+  description "Create a Microstation template file"
+
+  arg :directory
+
+  use_log_level_option
+
+  go!
+end

@@ -5,11 +5,16 @@ module Microstation
 
       include Enumerable
 
-      attr_reader :elements,:tagset
+      attr_reader :elements,:tagset,:microstation_id
 
-      def initialize(ts, elements)
+      def initialize(ts,id, elements)
         @tagset = ts
+        @microstation_id = id
         @elements = elements
+      end
+
+      def name
+        tagset.name
       end
 
       def to_s
@@ -47,6 +52,21 @@ module Microstation
         end
         result
       end
+
+      def attribute_hash
+        result = {"microstation_id" => microstation_id}
+        each_pair do |name, value|
+          result[name] = value
+        end
+        result
+      end
+
+      def to_h
+        result = {}
+        result[name] = attribute_hash
+        result
+      end
+
 
       def pair(el)
         [el.name, el.value]

@@ -9,7 +9,7 @@ describe "Microstation:Text and Microstation::TextNode" do
       @app = Microstation::App.new
       @drawing = open_existing_drawing(@app)
       @criteria = @app.create_scanner do |scan|
-        scan.include_textual        
+        scan.include_textual
       end
       @text_scan = @drawing.scan(@criteria)
       @text_enum = @text_scan.to_enum
@@ -25,38 +25,31 @@ describe "Microstation:Text and Microstation::TextNode" do
     let(:text) { @text}
 
     it "should be an instance of text" do
-      text.should be_instance_of Microstation::Text
+      expect(text).to be_instance_of Microstation::Text
     end
 
     it "should forward all the methods to underlying text" do
       val = text.to_s
       text.reverse.should == val.reverse
-      text.to_s.should == val
+      expect(text.to_s).to eq(val)
       puts "text: #{text}"
     end
 
     it "should forward all the Microstation commands to ole_obj" do
-      pending
-      text.IsTextElement.should be_true
+     expect(text.IsTextElement).to eq true
     end
 
     it "should update the drawing if the text is changed" do
-      pending
       id = text.microstation_id
-      debugger
-      puts "id: #{id}"
-      puts "id class #{id.class}"
       val = text.to_s
       text.reverse!
-      drawing_text = app.find_by_id(id)
-      drawing_text.to_s.should == val.reverse      
+      drawing_text = drawing.find_by_id(id)
+      expect(drawing_text.to_s).to eq(val.reverse)
     end
-    
-    
-    
+
+
+
 
   end
 
 end
-
-

@@ -3,15 +3,46 @@ module Microstation
   class VariableDefined < ::StandardError
     end
 
+
+  class App
+
+    def with_config
+
+    end
+
+  end
+
+
+
   class Configuration
 
     def initialize(app)
       @app = app
     end
 
+    def prepend(variable,value)
+      if exists?(variable)
+        old_value = get(variable)
+        new_value = "#{value};#{old_value}"
+      else
+        new_value = value.to_s
+      end
+      set!(variable,new_value)
+    end
+
+    def append(variable,value)
+      if exists?(variable)
+        old_value = get(variable)
+        new_value = "#{old_value};#{value}"
+      else
+        new_value = value.to_s
+      end
+      set!(variable,new_value)
+    end
+
     def [](variable)
       return nil unless exists? variable
-     value(variable)
+     get(variable)
     end
 
     def should_update?(key,options={force: false})
@@ -30,6 +61,7 @@ module Microstation
     end
 
     def set!(key,value)
+      self.remove_variable(key)
       workspace.AddConfigurationVariable(key,value)
     end
 
@@ -38,9 +70,7 @@ module Microstation
       set(key,value)
      end
 
-    def value(variable)
-      workspace.ConfigurationVariableValue(variable)
-    end
+
 
     def exists?(value)
       workspace.IsConfigurationVariableDefined(value)
@@ -53,6 +83,10 @@ module Microstation
     private
     def workspace
       @app.active_workspace
+    end
+
+  def get(variable)
+      workspace.ConfigurationVariableValue(variable)
     end
 
 

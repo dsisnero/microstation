@@ -1,10 +1,22 @@
 require_relative 'properties'
-require 'pry'
+require_relative 'ts/drawing_extensions'
+require_relative 'model'
+
+# /
+# // MessageId: DISP_E_PARAMNOTFOUND
+# //
+# // MessageText:
+# //
+# // Parameter not found.
+# //
+# ##define DISP_E_PARAMNOTFOUND       _HRESULT_TYPEDEF_(0x80020004L)
 module Microstation
 
   class Drawing
 
     include Properties
+    include TS::TagSetTrait
+    include CriteriaCreationT
 
     attr_reader :app
 
@@ -13,16 +25,26 @@ module Microstation
       @ole_obj = ole
     end
 
+    def ole_obj
+      begin
+        @ole_obj.ole_methods
+        @ole_obj
+      rescue => e
+        binding.pry
+        # @ole_obj = app.ole_open_drawing(self.path,read_only?)
+      end
+    end
+
     def active?
-      @ole_obj.IsActive
+      ole_obj.IsActive
     end
 
     def cad_input_queue(&block)
       @app.cad_input_queue(&block)
     end
 
-    def save_as_pdf(name = nil, dir = nil)
-      out_name = pdf_name(name,dir)
+    def save_as_pdf(name: self.name , dir: self.dirname)
+      out_name = Pathname(dir).expand_path + pdf_name(name)
       windows_name = app.windows_path(out_name)
       cad_input_queue do |q|
         q << "Print Driver #{pdf_driver}"
@@ -35,52 +57,104 @@ module Microstation
       puts "saved #{windows_name}"
     end
 
-    def pdf_name_from_options(options = {})
-      name = options.fetch(:name){ basename.ext('.pdf')}
-      dir = options.fetch(:dir){ dirname}
-      (dir + name).expand_path
-    end
-
-    # alias_method :title, :title=
-
-    def create_scanner(&block)
-      app.create_scanner(&block)
-    end
-
-    def scan(scanner = nil,&block)
-      app.scan(scanner,&block)
-    end
-
-    def scan_graphical(&block)
-      sc = create_scanner
-      sc.ExcludeNonGraphical
-      app.scan(sc,&block)
-    end
-
-    def scan_text(&block)
-      sc = create_scanner do
-        include_textual
+    def scan_all(criteria,&block)
+      if block
+        scan_all_with_block(criteria,&block)
+      else
+        scan_all_into_hash(criteria)
       end
-      app.scan(sc,&block)
     end
 
-    def get_text
+    def scan_all_with_block(criteria=nil)
+      result = {}
+      each_model do |m|
+        m.scan(criteria) do |r|
+          yield m.name, r
+        end
+      end
+    end
+
+    def read_only?
+      active_model_reference.IsReadOnly
+    end
+
+    def scan_all_into_hash(criteria=nil)
+      result = {}
+      each_model do |m|
+        result[m.name] = m.scan(criteria)
+      end
+      result
+    end
+
+    def scan(criteria = nil, model = nil, &block)
+      criteria = criteria || create_scan_criteria
+      model = model || default_model_reference
+      model.scan(criteria,&block)
+    end
+
+    def new_model(name,template = nil)
+      template = ole_obj.ActiveDesignFile.DefaultModelReference
+      el = ole_obj.ActiveDesignFile.Models.Add(template,name,"Added ")
+      m = Model.new(app,self,el)
+      m
+    end
+
+    def tags_to_hash
+      scan_all(tags_criteria)
+    end
+
+    def default_model_reference
+      Model.new(app,self,ole_obj.DefaultModelReference)
+    end
+
+    def scan_text(model = nil,&block)
+      model = get_model_for_scan(model)
+      model.scan_text(&block)
+    end
+
+    def get_text(model = nil, &block)
       result = []
-      scan_text do |t|
+      model = get_model_for_scan(model)
+      model.scan_text do |t|
         result << t.to_s
       end
       result
     end
 
-    def scan_tags(&block)
-      sc = create_scanner do
-        include_tags
+    def get_all_text(&block)
+      result = []
+      scan_all_text do |m, t|
+        result << t.to_s
       end
-      app.scan(sc,&block)
+      result
+    end
+
+    def get_model_for_scan(model = nil)
+       model = get_model_from_string(model) if model.is_a? String
+       model ||= default_model_reference
+       model
+    end
+
+    def get_model_from_string(model)
+       ole = ole_obj.Models(string)
+      Model.new(app,self,ole)
+    end
+
+    def scan_all_text(&block)
+      scan_all(text_criteria,&block)
+    end
+
+    def scan_tags(model = nil,&block)
+      model = get_model_for_scan(model)
+      model.scan(tags_criteria,&block)
+    end
+
+    def scan_all_tags(&block)
+      scan_all(tags_criteria,&block)
     end
 
     def modified_date
-      @ole_obj.DateLastSaved
+      ole_obj.DateLastSaved
     end
     #  alias_method :keywords , :keywords=x
 
@@ -89,7 +163,7 @@ module Microstation
     end
 
     # def fullname
-    #   @ole_obj.FullName
+    #   ole_obj.FullName
     # end
 
     def two_d?
@@ -101,7 +175,7 @@ module Microstation
     end
 
     def name
-      @ole_obj.Name
+      ole_obj.Name
     end
 
     def basename
@@ -109,7 +183,7 @@ module Microstation
     end
 
     def dirname
-      Pathname(@ole_obj.Path).expand_path
+      Pathname(ole_obj.Path).expand_path
     end
 
     def path
@@ -117,7 +191,7 @@ module Microstation
     end
 
     def revision_count
-      @ole_obj.DesignRevisionCount
+      ole_obj.DesignRevisionCount
     end
 
     def eval_cexpression(string)
@@ -125,59 +199,100 @@ module Microstation
     end
 
     def close
-      @ole_obj.Close
+      ole_obj.Close rescue nil
     end
 
-    def ole_obj
-      @ole_obj
-    end
-
-    def pdf_name(lname = nil,dir=nil)
-      dname = lname ? Pathname(lname) : Pathname(self.basename)
-      pdfname = dname.ext('.pdf')
-      dirname = dir ? Pathname(dir) : Pathname(self.dirname)
-      pdfname = (dirname + pdfname).expand_path
+    def pdf_name(name = nil)
+      name = self.name unless name
+      return Pathname(name).sub_ext(".pdf")
     end
 
     def pdf_driver
       app.windows_path( (Microstation.plot_driver_directory + "pdf-bw.plt").to_s)
     end
 
-    def tagset_names
-      tagsets.map{|ts| ts.name}
+    def each_model
+      result = []
+      ole_obj.Models.each do |el|
+        model = Model.new(app,self, el)
+        if block_given?
+          yield model
+        else
+          result << model
+        end
+      end
+      result
     end
 
-    def tagsets
-      @tagsets = TagSets.new(ole_obj_tagsets)
+    def models
+      @models ||= each_model
     end
 
-    def create_tagset(name,&block)
-      ts = tagsets.create(name)
-      block.call ts if block
-      ts
+    def change_model(name)
+      model = ole_obj.Models(name)
+      puts "no model #{name}" unless model
+      model.Activate
     end
 
-    def create_tagset!(name,&block)
-      remove_tagset(name)
-      create_tagset(name,&block)
+    def model_names
+      result = []
+      ole_obj.Models.each do |el|
+        result << el.name
+        el = nil
+      end
+      result
     end
 
-    def remove_tagset(name)
-      tagsets.remove(name)
+    def find_by_id(id)
+      models.each do |model|
+        el = model.find_by_id(id)
+        return el if el
+      end
     end
 
-    def find_tagset(name)
-      ts = tagsets[name]
-      ts.create_instances(scan_tags)
+    def ole_line_element_klass
+      @line_element ||= ole_classes.find{|c| c.name == '_LineElement'}
     end
 
-    protected
-    def ole_obj_tagsets
-      @ole_obj.TagSets
+    def ole_element_klass
+      @element_class ||= ole_classes.find{|c| c.name == '_Element'}
     end
 
-    def ensure_tags(tags)
-      tags.map{|t| t.class == WIN32OLE ? app.wrap(t) : t }
+    def app_ole_obj
+      @app_ole_obj ||= app.ole_obj
+    end
+
+    def typelib
+      @typelib  ||= app_ole_obj.ole_typelib
+    end
+
+    def ole_classes
+      @ole_classes ||= typelib.ole_classes
+    end
+
+    def create_line(p1,p2,el = nil)
+      pt1 = to_point(p1)
+      pt2 = to_point(p2)
+
+      el = WIN32OLE_VARIANT::NoParam unless el
+      begin
+        ole = app.ole_obj.CreateLineElement2(el,pt1.ole_obj,pt2.ole_obj)
+      rescue Exception => ex
+        binding.pry
+        return nil
+      end
+    end
+
+    def to_point(pt)
+      case pt
+      when Array
+        pt_a = pt.map{|p| p.to_f}
+        x,y,z = pt_a
+        z = 0 unless z
+        app.Point3d(x,y,z)
+      when Point3d
+        pt
+      end
     end
 
     # def create_tagset_instances(name,groups)
@@ -186,11 +301,89 @@ module Microstation
     # end
 
     def save
-      @ole_obj.Save
+      ole_obj.Save
+    end
+
+    def add_line(line_el)
+      line_obj = line_el.ole_obj
+      ole_obj.AddLine(line_obj)
+    end
+
+    def create_scanner(name,&block)
+      app.create_scanner(name,&block)
+    end
+
+    def find_tagset_instances(ts)
+      result = {}
+      each_model do |m|
+        instances = ts.find_instances_in_model(m)
+        next if instances.empty?
+        if block_given?
+          yield m.name, instances
+        else
+          result[m.name] = instances
+        end
+      end
+      result unless block_given?
+    end
+
+    def tagsets_in_drawing(&block)
+      tagsets.each do |ts|
+        find_tagset_instances(ts,&block)
+      end
+    end
+
+    def find_tagsets_by_name(name)
+      ts = find_tagset(name)
+      find_tagsets_instances(ts).values.flatten
     end
 
 
+    def find_tagset_by_name_and_id(name,id)
+      ts = find_tagset(name)
+      find_tagsets_instances(ts) do |m,instances|
+        ti = instances.find{|inst| inst.microstation_id == id}
+        return ti if ti
+      end
+    end
 
+    def update_tagset(name,h_local)
+      tsets = find_tagset_by_name(name)
+      case tsets.size
+      when 0
+        raise 'no tagset found'
+      when 1
+        ts = tset.first
+      else
+        id = h_local[microstation_id]
+        raise 'found #{tsets.size} instances; Need a microstation_id' unless id
+        ts = tsets.find{|ti| ti.microstation_id = id}
+      end
+      ts.update(h_local)
+    end
+
+    def tagsets_in_drawing2
+      result = {}
+      tagsets.each do |ts|
+        each_model do |m|
+          instances = ts.find_instances_in_model(m)
+          if block_given?
+            yield m.name, instances
+          else
+            result[m.name] = instances
+          end
+        end
+      end
+      result unless block_given?
+    end
+
+    def tagsets_in_drawing_to_hash
+      result = {}
+      tagsets_in_drawing do |m, tiarray|
+        result[m] = tiarray.map{|ti| ti.to_h}
+      end
+      result
+    end
 
   end
 

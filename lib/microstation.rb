@@ -13,6 +13,7 @@ require 'microstation/template'
 require 'microstation/tag_set'
 require 'microstation/tag'
 require 'microstation/dir'
+require 'microstation/ext/win32ole'
 
 require 'erb'
 
@@ -56,6 +57,14 @@ module Microstation
     drawings = Pathname.glob("#{dirpath}/*.d{gn,wg}")
   end
 
+  def self.dump_template_info(dir)
+    drawings = drawings_in_dir(dir)
+    self.with_drawings(drawings) do |drawing|
+      template = TemplateInfo.new(drawing)
+      template.dump(dir)
+    end
+  end
+
   def self.dgn2pdf(dir,output = dir)
     drawings = drawings_in_dir(dir)
     self.with_drawings(drawings) do |drawing|
@@ -83,11 +92,17 @@ module Microstation
   end
 
   def self.get_text(file)
-    result = nil
+    result = []
     Microstation.open_drawing(file) do |d|
       result = d.get_text
     end
     result
+  end
+
+  def self.get_all_text(file)
+    Microstation.open_drawing(file) do |d|
+      d.get_all_text
+    end
   end
 
   def self.run(options={}, &block)
@@ -96,8 +111,53 @@ module Microstation
       app = Microstation::App.new(options)
       block.arity < 1 ? app.instance_eval(&block) : block.call(app)
     ensure
-      app.quit
+      app.quit rescue nil
+      app = nil
     end
   end
+
+end
+
+
+if $0 == __FILE__
+
+  require 'pry'
+
+  app = Microstation::App.new
+  tlib = app.ole_obj.ole_typelib
+  File.open('microstation_classes.txt','w') do |f|
+    tlib.ole_classes.each do |k|
+      if k.ole_type == "Class"
+        f.puts k.name
+        f.puts k.progid
+        f.puts k.guid
+        f.puts "---"
+      end
+    end
+  end
+  drawing = app.new_drawing('mynew.dgn')
+
+  le =tlib.ole_classes.find{|c| c.name == 'LineElement'}
+  #puts drawing.model_names
+
+  VT = WIN32OLE::VARIANT
+  # Type.Missing equivalent
+
+  e1 = WIN32OLE_VARIANT::NoParam
+  e2 = WIN32OLE_VARIANT.new(nil, VT::VT_VARIANT|VT::VT_BYREF)
+
+
+  drawing.change_model('Default')
+  line = drawing.create_line [1,0.5],[1,1,0],e1
+  drawing.add_line line if line
+
+
+
+  binding.pry
+
+
+  app.quit
+
+
 
 end

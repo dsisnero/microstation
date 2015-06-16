@@ -1,3 +1,5 @@
+require 'microstation/element'
+
 module Microstation
 
   class Text < Element
@@ -27,7 +29,7 @@ module Microstation
       @original_text.to_s
     end
 
-    def method_missing2(meth,*args, &block)
+    def method_missing(meth,*args, &block)
       if meth =~ /^[A-Z]/
         @ole_obj.send(meth,*args)
       else
@@ -38,12 +40,12 @@ module Microstation
       end
     end
 
-    def method_missing(meth,*args,&block)
-      dup = @original_text.dup
-        result = dup.send(meth,*args, &block)
-        _update(dup) unless dup == @original_text
-      result
-    end
+    # def method_missing(meth,*args,&block)
+    #   dup = @original_text.dup
+    #     result = dup.send(meth,*args, &block)
+    #     _update(dup) unless dup == @original_text
+    #   result
+    # end
 
 
     def _update(text)
