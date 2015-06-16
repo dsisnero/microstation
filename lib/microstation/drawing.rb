@@ -1,6 +1,7 @@
 require_relative 'properties'
 require_relative 'ts/drawing_extensions'
 require_relative 'model'
+require_relative 'errors'
 
 # /
 # // MessageId: DISP_E_PARAMNOTFOUND
@@ -333,31 +334,31 @@ module Microstation
       end
     end
 
-    def find_tagsets_by_name(name)
+    def find_tagset_instances_by_name(name)
       ts = find_tagset(name)
-      find_tagsets_instances(ts).values.flatten
+      find_tagset_instances(ts).values.flatten
     end
 
 
-    def find_tagset_by_name_and_id(name,id)
+    def find_tagset_instances_by_name_and_id(name,id)
       ts = find_tagset(name)
-      find_tagsets_instances(ts) do |m,instances|
+      find_tagset_instances(ts) do |m,instances|
         ti = instances.find{|inst| inst.microstation_id == id}
         return ti if ti
       end
     end
 
-    def update_tagset(name,h_local)
-      tsets = find_tagset_by_name(name)
+    def update_tagset(name,h_local={})
+      tsets = find_tagset_instances_by_name(name)
       case tsets.size
       when 0
         raise 'no tagset found'
       when 1
-        ts = tset.first
+        ts = tsets.first
       else
-        id = h_local[microstation_id]
-        raise 'found #{tsets.size} instances; Need a microstation_id' unless id
-        ts = tsets.find{|ti| ti.microstation_id = id}
+        id = h_local.delete('microstation_id')
+        raise MultipleUpdateError, "found #{tsets.size} instances for tagset #{name}; Need a microstation_id for hash" unless id
+        ts = tsets.find{|ti| ti.microstation_id == id}
       end
       ts.update(h_local)
     end

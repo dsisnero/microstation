@@ -157,6 +157,65 @@ describe Microstation::Drawing do
       end
     end
 
+    describe "#update_tagset" do
+
+      context 'when 1 block exists' do
+
+      end
+
+      context 'when 1 block not in default drawing' do
+        let(:filename){ 'drawing_faatitle_in_non_default_model.dgn'}
+        let(:drawing_file){ drawing_path(filename)}
+        let(:drawing) { app.open_drawing(drawing_file)}
+        let(:app) { @app}
+
+        it 'updates tagset' do
+          app.visible = true
+          drawing.update_tagset('faatitle', { 'title1' => 'MY NEW TITLE'})
+          result = drawing.tagsets_in_drawing_to_hash
+          expect(result['ANSI D Sheet'][0]['faatitle']['title1']).to eq('MY NEW TITLE')
+        end
+
+
+      end
+
+      context 'when multiple blocks exist and no microstation_id' do
+
+        let(:filename){ 'drawing_with_3_block.dgn' }
+        let(:drawing_file){ drawing_path(filename)}
+        let(:drawing) { app.open_drawing(drawing_file)}
+        let(:app) { @app}
+
+        it 'errors' do
+          expect{drawing.update_tagset('electrical_panel_42')}.to raise_error Microstation::MultipleUpdateError
+        end
+
+      end
+
+      context 'when multiple blocks exist and microstation_id' do
+          let(:filename){ 'drawing_with_3_block.dgn' }
+        let(:drawing_file){ drawing_path(filename)}
+        let(:drawing) { app.open_drawing(drawing_file)}
+        let(:app) { @app}
+
+
+        it 'updates drawing with block' do
+          app.visible = true
+          panel = {"brk_1_service"=>"OUTLETS",
+            "brk_2_service"=>"AIR CONDITIONER",
+            "microstation_id"=>324}
+          drawing.update_tagset('electrical_panel_42', panel)
+          ts = drawing.find_tagset_instances_by_name_and_id('electrical_panel_42', 324)
+          expect( ts.brk_2_service).to eq('AIR CONDITIONER')
+
+        end
+
+
+      end
+
+    end
+
+
     describe "#get_text" do
       let(:file_name){ 'drawing_with_block.dgn'}
       let(:drawing_file){ drawing_path(file_name)}
