@@ -146,8 +146,8 @@ describe Microstation::TagSet do
 
     it 'gives correct tagset_hash' do
       h = drawing.tagsets_in_drawing_to_hash
-      expect(h.keys).to eq(['Default'])
-      expect(h['Default'][0].keys).to eq(['electrical_panel_42'])
+      expect(h[0].keys).to eq(['model_name','instances'])
+      expect(h[0]['instances'][0].keys).to eq(['tagset_name','attributes'])
     end
   end
 

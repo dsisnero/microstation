@@ -157,6 +157,42 @@ describe Microstation::Drawing do
       end
     end
 
+    # describe "#update_tagsets" do
+    #   let(:faatitle_atts){ { 'title1' => 'My New Title'}}
+    #   let(:panel_atts){ { 'brk1_srv' => 'My New brk1_srv' }}
+
+
+    #   context 'when given 1 tagset' do
+
+    #     it 'calls update_tagset correctly' do
+    #       tagsets = {'faatitle' => faatitle_atts}
+    #       drawing.update_tagsets(tagsets)
+    #       drawing.should_receive(:update_tagset).with('faatitle',faatitle_atts)
+    #     end
+    #   end
+
+    #   context 'when given tagset simple array' do
+
+    #     it 'calls update_tagset correctly' do
+    #       tagsets = [{'faatitle' => faatitle_atts},
+    #                  {'electrical_panel_42'=> panel_atts}
+    #                 ]
+    #       drawing.update_tagsets(tagsets)
+    #       drawing.should_receive(:update_tagset).with('faatitle',faatitle_atts)
+    #       drawing.should_receive(:update_tagset).with('electrical_panel_42',panel_atts)
+    #     end
+
+    #   end
+
+    #   context 'when given a tagset with named array' do
+    #     tagsets = [{'tagset_name' => 'faatitle', 'attributes'=> faatitle_atts}]
+    #     drawing.should_receive(:update_tagset).with('faatitle',faatitle_atts)
+    #     drawing.update_tagsets(tagsets)
+    #   end
+
+
+    # end
+
     describe "#update_tagset" do
 
       context 'when 1 block exists' do
@@ -164,159 +200,152 @@ describe Microstation::Drawing do
       end
 
       context 'when 1 block not in default drawing' do
-        let(:filename){ 'drawing_faatitle_in_non_default_model.dgn'}
-        let(:drawing_file){ drawing_path(filename)}
-        let(:drawing) { app.open_drawing(drawing_file)}
+        let(:seed){ drawing_path('drawing_faatitle_in_non_default_model.dgn')}
+        let(:drawing_file){ output_path('test.dgn')}
+        let(:drawing) { app.new_drawing(drawing_file,seed )}
         let(:app) { @app}
 
         it 'updates tagset' do
-          app.visible = true
+          ts = drawing.find_tagset_instances_by_name('faatitle').first
+          expect(ts.title1).to eq('TITLE 1')
           drawing.update_tagset('faatitle', { 'title1' => 'MY NEW TITLE'})
-          result = drawing.tagsets_in_drawing_to_hash
-          expect(result['ANSI D Sheet'][0]['faatitle']['title1']).to eq('MY NEW TITLE')
+          ts = drawing.find_tagset_instances_by_name('faatitle').first
+          expect(ts.title1).to eq('MY NEW TITLE')
+          drawing.close
+          FileUtils.rm drawing_file
         end
-
 
       end
 
-      context 'when multiple blocks exist and no microstation_id' do
+      context 'when multiple blocks' do
 
-        let(:filename){ 'drawing_with_3_block.dgn' }
-        let(:drawing_file){ drawing_path(filename)}
-        let(:drawing) { app.open_drawing(drawing_file)}
+        let(:seed){ drawing_path('drawing_with_3_block.dgn')}
+        let(:filename){ 'test.dgn' }
+        let(:drawing_file){ output_path(filename)}
+        let(:drawing) { app.new_drawing(drawing_file,seed)}
+        let(:panel_atts){  {"brk_1_service"=>"OUTLETS", "brk_2_service"=>"AIR CONDITIONER",}}
         let(:app) { @app}
 
-        it 'errors' do
-          expect{drawing.update_tagset('electrical_panel_42')}.to raise_error Microstation::MultipleUpdateError
+        context 'with no microstation_id' do
+
+
+          it 'errors' do
+            expect{ drawing.update_tagset('electrical_panel_42', panel_atts )}.to raise_error Microstation::MultipleUpdateError
+          end
+
+        end
+
+        context 'when multiple blocks exist and microstation_id' do
+
+
+          it 'updates drawing with block' do
+            ts = drawing.find_tagset_instances_by_name_and_id('electrical_panel_42', 324)
+            expect(ts.brk_1_service).to eq('')
+            expect(ts.brk_2_service).to eq('')
+            panel = panel_atts.merge({'microstation_id' => 324})
+            drawing.update_tagset('electrical_panel_42', panel)
+            ts = drawing.find_tagset_instances_by_name_and_id('electrical_panel_42', 324)
+            expect( ts.brk_2_service).to eq('AIR CONDITIONER')
+            expect( ts.brk_1_service).to eq('OUTLETS')
+            drawing.close
+            FileUtils.rm drawing_file
+          end
+
         end
 
       end
 
-      context 'when multiple blocks exist and microstation_id' do
-          let(:filename){ 'drawing_with_3_block.dgn' }
-        let(:drawing_file){ drawing_path(filename)}
-        let(:drawing) { app.open_drawing(drawing_file)}
-        let(:app) { @app}
+      describe "#get_text" do
+        let(:file_name){ 'drawing_with_block.dgn'}
+        let(:drawing_file){ drawing_path(file_name)}
+        let(:drawing_no_text_file){ drawing_path( 'drawing_no_block.dgn')}
+        let(:drawing_no_text){ app.open_drawing(drawing_no_text_file)}
+        let(:drawing_with_block){ app.open_drawing(drawing_file)}
+        let(:app){ @app}
 
+        it 'returns empty array if text has no text' do
+          expect( drawing_no_text.get_text).to eq([])
+        end
 
-        it 'updates drawing with block' do
-          app.visible = true
-          panel = {"brk_1_service"=>"OUTLETS",
-            "brk_2_service"=>"AIR CONDITIONER",
-            "microstation_id"=>324}
-          drawing.update_tagset('electrical_panel_42', panel)
-          ts = drawing.find_tagset_instances_by_name_and_id('electrical_panel_42', 324)
-          expect( ts.brk_2_service).to eq('AIR CONDITIONER')
-
+        it 'gets all the text if drawing has text' do
+          text_in_drawing = text_for_drawing_with_block()
+          text_from_drawing = drawing_with_block.get_text
+          expect(text_from_drawing.sort ).to eq( text_for_drawing_with_block().sort )
         end
 
 
       end
-
-    end
-
-
-    describe "#get_text" do
-      let(:file_name){ 'drawing_with_block.dgn'}
-      let(:drawing_file){ drawing_path(file_name)}
-      let(:drawing_no_text_file){ drawing_path( 'drawing_no_block.dgn')}
-      let(:drawing_no_text){ app.open_drawing(drawing_no_text_file)}
-      let(:drawing_with_block){ app.open_drawing(drawing_file)}
-      let(:app){ @app}
-
-      it 'returns empty array if text has no text' do
-        expect( drawing_no_text.get_text).to eq([])
-      end
-
-      it 'gets all the text if drawing has text' do
-        text_in_drawing = text_for_drawing_with_block()
-        text_from_drawing = drawing_with_block.get_text
-        expect(text_from_drawing.sort ).to eq( text_for_drawing_with_block().sort )
-      end
-
-
     end
   end
 end
 
-
-# describe "#name and path" do
-
+  # describe "#name and path" do
 
 
 
-#   context "when given a relative name and no project_dir" do
-#     before(:each) do
-#       @app.project_dir = nil
-#       @drawing_name = "my drawing.dgn"
-#       @path = @app.normalize_name(@drawing_name)
 
-#     end
+  #   context "when given a relative name and no project_dir" do
+  #     before(:each) do
+  #       @app.project_dir = nil
+  #       @drawing_name = "my drawing.dgn"
+  #       @path = @app.normalize_name(@drawing_name)
 
-#     after(:each) do
-#       @path.unlink
-#     end
+  #     end
 
-#     subject{@app.drawing(@drawing_name) }
+  #     after(:each) do
+  #       @path.unlink
+  #     end
 
-
-#     it "#name should be set to the name of the drawing with .dgn extension" do
-#       subject.name.should =~ "my drawing.dgn"
-#     end
-
-#     it "#path should be the working path" do
-#       subject.path.should == Pathname.getwd
-#     end
-
-#   end
-
-#   context "when given a relative name and a project_dir" do
-
-#     before(:each) do
-#       @app.project_dir = "c:/my_projects/"
-#       @drawing = @app.drawing('my drawing')
-#     end
-
-#     after(:each) do
-#       File.delete(@drawing.full_path)
-#     end
+  #     subject{@app.drawing(@drawing_name) }
 
 
-#     it "name should be the name of the drawing" do
-#       @drawing.name.should == 'my drawing.dng'
-#     end
+  #     it "#name should be set to the name of the drawing with .dgn extension" do
+  #       subject.name.should =~ "my drawing.dgn"
+  #     end
 
-#     it "path should == the project_dir" do
-#       drawing.path.should == "c:\\my_projects"
-#     end
+  #     it "#path should be the working path" do
+  #       subject.path.should == Pathname.getwd
+  #     end
 
-#   end
-# end
+  #   end
 
-# describe "#drawing" do
-#   before(:each) do
-#     ENV["USERNAME"] = "test person"
-#   end
+  #   context "when given a relative name and a project_dir" do
 
-#   after(:each) do
-#     @drawing.close
-#     @drawing =  nil
-#   end
+  #     before(:each) do
+  #       @app.project_dir = "c:/my_projects/"
+  #       @drawing = @app.drawing('my drawing')
+  #     end
 
-#   it "should set author" do
-#     @app.should_receive(:username).and_return("test person")
-#     @drawing = @app.drawing(drawing_path)
-#     @drawing.author.should == "test person"
-#   end
+  #     after(:each) do
+  #       File.delete(@drawing.full_path)
+  #     end
 
-# end
 
-# describe "creating  a new drawing" do
-#   before(:each) do
-#     @drawing = @app.drawing(drawing_path)
-#   end
+  #     it "name should be the name of the drawing" do
+  #       @drawing.name.should == 'my drawing.dng'
+  #     end
 
-#   after(:each) do
-#     @drawing.close
-#     @drawing = nil
-#   end
+  #     it "path should == the project_dir" do
+  #       drawing.path.should == "c:\\my_projects"
+  #     end
+
+  #   end
+  # end
+
+  # describe "#drawing" do
+  #   before(:each) do
+  #     ENV["USERNAME"] = "test person"
+  #   end
+
+  #   after(:each) do
+  #     @drawing.close
+  #     @drawing =  nil
+  #   end
+
+  #   it "should set author" do
+  #     @app.should_receive(:username).and_return("test person")
+  #     @drawing = @app.drawing(drawing_path)
+  #     @drawing.author.should == "test person"
+  #   end
+
+  # end

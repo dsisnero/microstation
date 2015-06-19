@@ -7,6 +7,8 @@ README.txt
 Rakefile
 bin/dgn2pdf
 bin/microstation
+bin/dgn_template
+cad_files/drawing_faatitle_in_non_default_model.dgn
 cad_files/drawing_no_block.dgn
 cad_files/drawing_with_3_block.dgn
 cad_files/drawing_with_block.dgn
@@ -41,6 +43,8 @@ lib/microstation/scanner.rb
 lib/microstation/tag.rb
 lib/microstation/tag_set.rb
 lib/microstation/template.rb
+lib/microstation/template_info.rb
+lib/microstation/template_runner.rb
 lib/microstation/text.rb
 lib/microstation/text_node.rb
 lib/microstation/ts/attribute.rb
@@ -48,6 +52,7 @@ lib/microstation/ts/drawing_extensions.rb
 lib/microstation/ts/instance.rb
 lib/microstation/ts/tagset_trait.rb
 lib/microstation/types.rb
+lib/microstation/version.rb
 lib/microstation/wrap.rb
 plot/pdf-bw.plt
 plot/pdf.plt
@@ -63,6 +68,7 @@ spec/microstation_spec.rb
 spec/model_spec.rb
 spec/spec_helper.rb
 spec/tag_set_spec.rb
+spec/template_info_spec.rb
 spec/template_spec.rb
 spec/text_node_spec.rb
 spec/text_spec.rb

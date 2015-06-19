@@ -4,7 +4,6 @@ describe "Microstation::App" do
 
   before(:all) do
     @app = Microstation::App.new
-    @app.visible = true
     config_app(@app)
     @existing_drawing_path = drawing_path('test.dgn')
     @new_drawing_path = drawing_path('my_new_drawing.dgn')
@@ -28,7 +27,7 @@ describe "Microstation::App" do
 
       it "with no options visible is true" do
         test_app = Microstation::App.new
-        expect(test_app).to be_visible
+        expect(test_app).to_not be_visible
       end
 
       it "setting visible false" do

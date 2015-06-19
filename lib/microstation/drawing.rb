@@ -94,8 +94,8 @@ module Microstation
     end
 
     def new_model(name,template = nil)
-      template = ole_obj.ActiveDesignFile.DefaultModelReference
-      el = ole_obj.ActiveDesignFile.Models.Add(template,name,"Added ")
+      template_ole = template ? template.ole_obj : app.ole_obj.ActiveDesignFile.DefaultModelReference
+      el = app.ole_obj.ActiveDesignFile.Models.Add(template_ole,name,"Added ")
       m = Model.new(app,self,el)
       m
     end
@@ -131,13 +131,13 @@ module Microstation
     end
 
     def get_model_for_scan(model = nil)
-       model = get_model_from_string(model) if model.is_a? String
-       model ||= default_model_reference
-       model
+      model = get_model_from_string(model) if model.is_a? String
+      model ||= default_model_reference
+      model
     end
 
     def get_model_from_string(model)
-       ole = ole_obj.Models(string)
+      ole = ole_obj.Models(string)
       Model.new(app,self,ole)
     end
 
@@ -334,6 +334,17 @@ module Microstation
       end
     end
 
+
+    def find_tagset_with_block(name)
+      ts = find_tagset(name)
+      find_tagset_instances(ts) do |m, instances|
+        instances.each do |inst|
+          return inst if yield m, inst
+        end
+      end
+      nil
+    end
+
     def find_tagset_instances_by_name(name)
       ts = find_tagset(name)
       find_tagset_instances(ts).values.flatten
@@ -341,11 +352,7 @@ module Microstation
 
 
     def find_tagset_instances_by_name_and_id(name,id)
-      ts = find_tagset(name)
-      find_tagset_instances(ts) do |m,instances|
-        ti = instances.find{|inst| inst.microstation_id == id}
-        return ti if ti
-      end
+      find_tagset_with_block(name){|m,i| i.microstation_id == id}
     end
 
     def update_tagset(name,h_local={})
@@ -361,6 +368,50 @@ module Microstation
         ts = tsets.find{|ti| ti.microstation_id == id}
       end
       ts.update(h_local)
+    end
+
+    def update_tagsets(ts_arg)
+      update_error() unless ts_arg.class == Array
+      first_element = ts_arg.first
+      if first_element.class == Hash
+        if first_element.keys == ['model_name', 'instances']
+          update_tagsets_from_template_structure(ts_arg)
+        elsif
+          first_element.keys == ['tagset_name','attributes']
+          update_tagsets_from_array_name_structure(ts_arg)
+        elsif first_element.keys.size == 1
+          update_tagsets_from_simple_arg(ts_arg)
+        end
+      else
+        update_error()
+      end
+    end
+
+    def update_error
+      raise ArgumentError, 'Argument must be an array of hashes'
+    end
+
+    def update_tagsets_from_template_structure(ts_arg)
+      ts_arg.each do |h|
+        inst_array = h['instances']
+        inst_array.each do |ts_hash|
+          update_tagset(ts_hash['tagset_name'], ts_hash['attributes'])
+        end
+      end
+    end
+
+    def update_tagsets_from_array_name_structure(ts_arg)
+      ts_arg.each do |tsname, atts|
+        update_tagset(tname,atts)
+      end
+    end
+
+    def update_tagsets_from_simple_arg(ts_arg)
+      ts_arg.each do |inst_hash|
+        inst_hash.each_pair do |name,atts|
+          update_tagset(name,atts)
+        end
+      end
     end
 
     def tagsets_in_drawing2
@@ -379,12 +430,13 @@ module Microstation
     end
 
     def tagsets_in_drawing_to_hash
-      result = {}
+      result = []
       tagsets_in_drawing do |m, tiarray|
-        result[m] = tiarray.map{|ti| ti.to_h}
+        result << { 'model_name' => m, 'instances'=> tiarray.map{|ti| ti.to_h}}
       end
       result
     end
+
 
   end
 
