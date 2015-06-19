@@ -62,8 +62,8 @@ module Microstation
       end
 
       def to_h
-        result = {}
-        result[name] = attribute_hash
+        result = {'tagset_name'=> tagset.name}
+        result['attributes'] = attribute_hash
         result
       end
 

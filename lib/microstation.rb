@@ -1,3 +1,4 @@
+require 'microstation/version'
 require 'win32ole'
 require 'microstation/file_tests'
 require 'microstation/app'
@@ -14,11 +15,12 @@ require 'microstation/tag_set'
 require 'microstation/tag'
 require 'microstation/dir'
 require 'microstation/ext/win32ole'
-
+require 'microstation/template_info'
+require 'microstation/template_runner'
 require 'erb'
 
 module Microstation
-  VERSION = '0.8.0'
+
 
   def self.root
     Pathname.new( File.dirname(__FILE__)).parent
@@ -69,6 +71,12 @@ module Microstation
     drawings = drawings_in_dir(dir)
     self.with_drawings(drawings) do |drawing|
       drawing.save_as_pdf(drawing.name,output)
+    end
+  end
+
+  def self.run_templates_in_dir(dir)
+    self.run do |app|
+      app.run_templates_in_dir(dir)
     end
   end
 

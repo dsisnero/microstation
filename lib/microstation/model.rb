@@ -37,12 +37,34 @@ module Microstation
     end
 
     def active?
-      ole_obj.Active
+      ole_obj.IsActive
+    end
+
+    def get_selected_elements
+      Enumerator.new(ole_obj.GetSelectedElements)
+    end
+
+    def unselect_element(el)
+      ole_obj.UnselectElement(el.ole_obj)
+    end
+
+    def select_element(el)
+      ole_obj.SelectElement(el.ole_obj)
+    end
+
+    def readonly?
+      ole_obj.IsReadOnly
     end
 
     def activate
       ole_obj.Activate
     end
+
+    def locked?
+      ole_obj.IsLocked?
+    end
+
+
 
     def to_s
       "Microstation::Model-#{name}"

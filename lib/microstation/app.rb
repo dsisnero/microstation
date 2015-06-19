@@ -61,8 +61,17 @@ module Microstation
       end
     end
 
-    def render_template(drawing,output_dir: ,locals: {} )
-      Template.new(drawing,self).render(output_dir: output_dir ,locals: locals)
+    def run_templates_in_dir(dir,options={})
+      yaml_files  = Pathname.glob( Pathname(dir).expand_path + '*.yaml')
+      yaml_files.each do |f|
+        TemplateRunner.new(f).run_with_app(self,options)
+      end
+
+    end
+
+    def render_template(drawing,output_dir: nil ,locals: {} )
+      temp = Template.new(drawing,self)
+      temp.render(output_dir: output_dir ,locals: locals)
     end
 
     def self.default_error_proc
@@ -114,23 +123,22 @@ module Microstation
     attr_reader :scanners,:visible
 
     def initialize(options = {})
-      @visible = options.fetch(:visible){ true }
-      @ole_obj = init_ole()
-      @ole_obj.Visible = @visible
+      @visible = options.fetch(:visible){ false }
+      @ole_obj = init_ole(@visible)
       @windows = Windows::FileSystem.new
       #  make_visible(visible)
       @scanners = {}
     end
 
-    def init_ole(tries: 3, sleep_duration: 0.1)
+    def init_ole(visible=false,tries: 3, sleep_duration: 0.5)
       begin
         ole_obj = WIN32OLE.new('MicrostationDGN.Application')
         sleep(sleep_duration)
-        ole_obj.ole_methods
+        ole_obj.Visible = visible
         ole_obj
       rescue => e
         tries -= 1
-        sleep_duration += 1
+        sleep_duration += 1.5
         puts "Error: #{e}. #{tries} tries left."
         retry if tries > 0
         raise
@@ -178,7 +186,7 @@ module Microstation
         @ole_obj.ole_methods
         @ole_obj
       rescue => e
-        @ole_obj = init_ole()
+        @ole_obj = init_ole(visible)
       end
     end
 

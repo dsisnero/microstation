@@ -1,0 +1,96 @@
+#!/usr/bin/env ruby
+require 'gli'
+
+begin # XXX: Remove this begin/rescue before distributing your app
+  require 'microstation'
+rescue LoadError
+  STDERR.puts "In development, you need to use `bundle exec ruby -I lib bin/dgn_template` to run your app"
+  STDERR.puts "At install-time, RubyGems will make sure lib, etc. are in the load path"
+  STDERR.puts "Feel free to remove this message from bin/dgn_template now"
+  exit 64
+end
+
+include GLI::App
+
+
+version Microstation::VERSION
+
+subcommand_option_handling :normal
+arguments :strict
+
+# desc 'Describe some switch here'
+# switch [:s,:switch]
+
+# desc 'Describe some flag here'
+# default_value 'the default'
+# arg_name 'The name of the argument'
+# flag [:f,:flagname]
+
+desc 'create template description files to fill out'
+long_desc "
+Given a directory, this will generate yaml files describing
+the fields and tagsets of dgn files in the directory
+"
+
+arg 'dir'
+command :dump do |c|
+ # c.desc ''
+ # c.switch :s
+
+  c.desc 'file to run dump on'
+  #  c.default_value 'default'
+  c.flag [:f, :filename]
+  c.action do |global_options,options,args|
+
+    # Your command logic here
+
+    # If you have any errors, just raise them
+    # raise "that command made no sense"
+    if options[:f]
+      puts "file dump ran with file option #{options[:f]}"
+    else
+      help_now!('dir is required') if args.empty?
+      Microstation.dump_template_info args.first
+    end
+  end
+end
+
+desc 'Run the template description files'
+arg :dir, :optional
+command :run do |c|
+
+  c.desc 'file to run'
+  c.flag [:f, :filename]
+  c.action do |global_options,options,args|
+    if options[:f]
+      puts "Running run on file #{options[:f]}"
+    else
+      dir = args.shift
+      help_now!('arg "dir" is required if no :filename flag set') unless dir
+      Microstation.run_templates_in_dir(dir)
+    end
+  end
+end
+
+pre do |global,command,options,args|
+  # Pre logic here
+  # Return true to proceed; false to abort and not call the
+  # chosen command
+  # Use skips_pre before a command to skip this block
+  # on that command only
+  true
+end
+
+post do |global,command,options,args|
+  # Post logic here
+  # Use skips_post before a command to skip this
+  # block on that command only
+end
+
+on_error do |exception|
+  # Error logic here
+  # return false to skip default error handling
+  true
+end
+
+exit run(ARGV)
