@@ -14,7 +14,7 @@ describe "Microstation::App" do
   end
 
   after(:all) do
-    @app.close_active_dburawing if @app
+    @app.close_active_drawing if @app
     @app.quit if @app
     File.delete(@new_drawing_path) if File.exist?(@new_drawing_path)
   end
