@@ -2,8 +2,9 @@
 .rspec
 Gemfile
 History.txt
+LICENSE.adoc
 Manifest.txt
-README.txt
+README.adoc
 Rakefile
 bin/dgn2pdf
 bin/microstation
