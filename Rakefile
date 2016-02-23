@@ -11,11 +11,19 @@ CLEAN.include("**/#*.*#")
 Hoe.plugin :bundler
 Hoe.plugin :minitest
 Hoe.plugin :git
+Hoe.plugin :yard
 # Hoe.plugin :rubyforge
 
 Hoe.spec 'microstation' do
   developer('Dominic Sisneros', 'dsisnero@gmail.com')
   clean_globs << '**/#*.*#'
+  self.yard_markup = 'asciidoc'
+  self.urls = ['https://test']
+  self.description = 'this is description'
+  self.summary = 'this is summary'
+
+  dependency('yard','~> 0.0',:dev)
+  dependency('hoe-yard','~> 0.0',:dev)
   dependency('rspec', '~> 3.2', :dev)
   dependency('hoe','> 0.0.0', :dev)
   dependency('hoe-bundler', '> 0.0.0', :dev)
