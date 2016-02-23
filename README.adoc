@@ -1,0 +1,131 @@
+= microstation
+Dominic Sisneros <https://github.com/dsisnero[@dsisnero]
+//settings
+:page-layout: base
+:idprefix:
+:idseparator: -
+:source-language: ruby
+:language: {source-language}
+// Uris
+:uri-org: https://github.com/dsisnero
+:uri-repo: {uri-org}/microstation
+:uri-issues: {uri-repo}/issues
+:uri-contributors: {uri-repo}/graphs/contributors
+:uri-changelog: {uri-rel-file-base}CHANGELOG.adoc
+:uri-rel-file-base: {uri-repo}/blob/master/
+:uri-rel-tree-base: {uri-repo}/tree/master/
+:uri-contribute: {uri-rel-file-base}CONTRIBUTING.adoc
+:uri-license: {uri-rel-file-base}LICENSE.adoc
+
+
+
+== DESCRIPTION:
+
+this is a gem that wraps Bentley Microstation using the WIN32OLE
+library.
+
+== Requirements
+
+* Microstation Installed
+* MRI
+
+== Installation
+
+Microstation can be installed using (a) the `gem install` command, (b) Bundler
+
+=== (a) gem install
+
+Open a terminal and type
+$ gem install microstation
+
+.Upgrading your installation
+[TIP]
+====
+If you have an earlier version of microstation installed you can update it using:
+
+$ gem update microstation
+
+If you install a new version of the gem using `gem install` instead of
+gem update, you'll have multiple versions installed. If that's the
+case, use the following gem command to remove the old versions:
+
+$ gem cleanup microstation
+====
+=== (b) Bundler
+
+. Create a Gemfile in the root folder of your project (or the current directory)
+. Add the `asciidoctor` gem to your Gemfile as follows:
++
+[source]
+----
+source 'https://rubygems.org'
+gem 'microstation'
+# or specify the version explicitly
+# gem 'microstation', '0.0.5'
+----
+
+. Save the Gemfile
+. Open a terminal and install the gem using:
+
+ $ bundle
+
+To upgrade the gem, specify the new version in the Gemfile and run `bundle` again.
+Using `bundle update` is *not* recommended as it will also update other gems, which may not be the desired result.
+
+== Usage
+
+[source]
+====
+
+
+  text_in_drawing = []
+  Microstation.run do |app|
+     sc = app.create_scanner do 
+         include_color(3)
+         include_level(3)
+     end
+     app.open_drawing('./test.dgn') do |drawing|
+       drawing.scan_text do |text|
+          text.reverse! if text =~ /Reverse/  # things that modify thetext_in_drawing 
+          puts text.to_s
+       end
+       drawing.scan( sc) do |ele|
+          
+       end
+
+       
+       drawing.save_as_pdf
+     end
+  end
+
+====
+
+== Getting Help
+
+The Asciidoctor project is developed to help you easily write and publish your content.
+But we can't do that without your feedback!
+We encourage you to ask questions and discuss any aspects of the project on the discussion list, Twitter or IRC.
+
+Mailing list:: {uri-discuss}
+#Twitter (Chat):: #asciidoctor hashtag
+#Gitter (Chat):: image:https://badges.gitter.im/Join%20In.svg[Gitter, link=https://gitter.im/asciidoctor/asciidoctor]
+#IRC (Chat):: {uri-irc}[#asciidoctor] on FreeNode IRC
+
+ifdef::env-github[]
+Further information and documentation about Asciidoctor can be found on the project's website.
+
+{uri-project}/[Home] | {uri-news}[News] | {uri-docs}[Docs]
+endif::[]
+
+The project's source code, issue tracker, and sub-projects are on github
+
+Source repository (git):: {uri-repo}
+Issue tracker:: {uri-issues}
+Microstation organization on GitHub:: {uri-org}
+
+== Copyright and Licensing
+
+Copyright (C) 2012-2016 Dominic Sisneros and the Microstation-Ruby Project.
+Free use of this software is granted under the terms of the MIT License.
+
+See the {uri-license}[LICENSE] file for details.
