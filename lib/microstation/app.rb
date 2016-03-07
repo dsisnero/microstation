@@ -44,6 +44,20 @@ module Microstation
 
     include Wrap
 
+    # Initialize an instance of app with the options
+    # @param [Hash] options the options to create the app with
+    # @option options [Boolean] :visible Is the app visible
+    #
+    # [source]
+    # ----
+    # App.run do |app|
+    #   drawing = app.open_drawing('test.dgn')
+    #   drawing.scan_all_text do |model,text|
+    #   puts "#{model} #{text}"
+    #   end
+    # end
+    #
+    # @yield [App] the_app yields the instanciated app
     def self.run(options={})
       begin
         the_app = new(options)
@@ -55,6 +69,9 @@ module Microstation
       end
     end
 
+    # Calls #run to get an app instance then call open drawing with
+    # that app
+    # (see #open_drawing)
     def self.open_drawing(drawing,options={},&block)
       self.run(options) do |app|
         app.open_drawing(drawing,options,&block)
@@ -86,6 +103,23 @@ module Microstation
       { visible: true }
     end
 
+    # Runs the app, opening the filenames
+    # and yielding each open drawing to the
+    # supplied block
+    # it automatically closes the drawing and
+    # the app when done
+    #
+    # [source]
+    # dir = Pathname('C:/templates')
+    # drawings = Pathname.glob(dir + '/**/*.dgn')
+    # App.with_drawings(drawings) do |drawing|
+    #   drawing.save_as_pdf(dir: 'c:/output/')
+    # end
+    #
+    # @param filenames
+    # @param options
+    # @param block
+    # @yield [Drawing]
     def self.with_drawings(*files, &block)
       drawing_options = default_drawing_options
       app_options = default_app_options
@@ -122,6 +156,8 @@ module Microstation
 
     attr_reader :scanners,:visible
 
+    # Constructor for app
+    # @param [Boolean] visible
     def initialize(options = {})
       @visible = options.fetch(:visible){ false }
       @ole_obj = init_ole(@visible)
@@ -145,6 +181,7 @@ module Microstation
       end
     end
 
+    # @return [Boolean] whether the app is visible
     def visible?
       @visible
     end
@@ -208,6 +245,13 @@ module Microstation
       template = nil
     end
 
+    # open the drawing
+    # @param filename [String] the name of the file to open
+    # @param options [Hash] the options to open with
+    # @option options [Boolean] :readonly  (false)
+    # @option options [Proc] :open_error_proc (raise) a proc to run
+    # @option options [Proc] :yield_error_proc (raise) a proc to run
+    # @yield [Drawing] drawing
     def open_drawing(filename,options = {})
       filename = Pathname(filename)
       raise FileNotFound unless filename.file?
@@ -257,19 +301,26 @@ module Microstation
       ole_obj.ActiveWorkspace
     end
 
+    # @return the [Configuration]
     def configuration
       @config ||= Microstation::Configuration.new(self)
     end
 
+    # @return [String] the configuration variable USERNAME
     def username
       configuration["USERNAME"]
     end
 
-    # seedfile A String expression. The name of the seed file. Should not include a path. The default extension is ".dgn".
-    # Typical values are "seed2d" or "seed3d".
-    # open
-    # If the open argument is True, CreateDesignFile returns the newly-opened DesignFile object; this is the same value as
-    #  ActiveDesignFile. If the Open argument is False, CreateDesignFile returns Nothing.
+    # create a new drawing
+    # @param filename [String] the name of the file
+    # @param seedfile [String] The name of the seed file.
+    #  should not include a path. The default extension is ".dgn".
+    #  Typical values are "seed2d" or "seed3d".
+    # @param open [Boolean] .If the open argument is True,
+    #   CreateDesignFile returns the newly-opened DesignFile object;
+    #   this is the same value as ActiveDesignFile. If the Open argument is False,
+    #   CreateDesignFile returns Nothing.
+    # @return [Drawing]
     def new_drawing(filename, seedfile=nil     ,open = true,&block)
       #drawing_name = normalize_name(filename)
       seedfile = determine_seed(seedfile)
@@ -302,6 +353,8 @@ module Microstation
        end
      end
 
+    # prepend a dir to the MS_SEEDFILES configuration
+    # @param dir [String,Pathname]
     def prepend_seed_path(dir)
       configuration.prepend('MS_SEEDFILES', dir)
     end
@@ -317,11 +370,18 @@ module Microstation
       raise "Seedfile #{seedfile} not found in #{configured_seed_paths}"
     end
 
+    # @return [String] the configuration variable MS_SEEDFILES
     def configured_seed_paths
       configuration['MS_SEEDFILES']
     end
 
-
+    # find the seedfile
+    # @param [String,Pathname] seedfile
+    #
+    # * If the seed file is absolute and found the return the
+    # seedfile.
+    # * If the seed file is not found search MS_SEEDFILES
+    # @return [Pathname] seedfile the found seedfile
     def find_seed(seedfile)
       seed = Pathname(seedfile).expand_path.sub_ext(".dgn")
       return seed if seed.file?
@@ -333,6 +393,7 @@ module Microstation
       return (seed_dir + seedfile) if seed_dir
     end
 
+    # @return [Array] returns the MS_SEEDFILES as Pathnames Array
     def seed_paths
       configured_seed_paths.split(';').map{|d| Pathname(d)}
     end
@@ -347,6 +408,8 @@ module Microstation
       ole_obj.Quit rescue nil
     end
 
+    # the active design file
+    # @return [Drawing]
     def active_design_file
       ole = ole_obj.ActiveDesignFile rescue nil
       drawing_from_ole(ole) if ole
@@ -407,7 +470,8 @@ module Microstation
       end
     end
 
-
+    # lets you interact with the cad_input_queue
+    # @yield queue
     def cad_input_queue
 
       queue = init_cad_input_queue
