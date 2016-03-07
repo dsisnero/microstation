@@ -44,8 +44,23 @@ module Microstation
       @app.cad_input_queue(&block)
     end
 
+    # copy the drawing
+    # @param [String] name of the file
+    # @param [String,Pathname] dir
+    def copy(name: nil, dir: nil)
+      if dir.nil?
+        lname = name || copy_name
+        dir_path = self.dirname
+      else
+        lname = name || self.name
+        dir_path = Pathname(dir)
+      end
+      copy_path = dir_path + lname
+      FileUtils.copy self.path.to_s, copy_path.to_s, verbose: true
+    end
+
     def save_as_pdf(name: self.name , dir: self.dirname)
-      out_name = Pathname(dir).expand_path + pdf_name(name)
+      out_name = pdf_path(name: name, dir: dir)
       windows_name = app.windows_path(out_name)
       cad_input_queue do |q|
         q << "Print Driver #{pdf_driver}"
@@ -96,8 +111,17 @@ module Microstation
     def new_model(name,template = nil)
       template_ole = template ? template.ole_obj : app.ole_obj.ActiveDesignFile.DefaultModelReference
       el = app.ole_obj.ActiveDesignFile.Models.Add(template_ole,name,"Added ")
-      m = Model.new(app,self,el)
+      m = model_from_ole(el).activate
       m
+    end
+
+    # Find the model in the drawing
+    # @param [String] name - the name of the model
+    # @return [Model, nil] the model or nil if not found
+    def find_model(name)
+      ole = ole_obj.Models(name)
+      return nil unless ole
+      model_from_ole(ole)
     end
 
     def tags_to_hash
@@ -215,7 +239,7 @@ module Microstation
     def each_model
       result = []
       ole_obj.Models.each do |el|
-        model = Model.new(app,self, el)
+        model = model_from_ole(el)
         if block_given?
           yield model
         else
@@ -243,6 +267,19 @@ module Microstation
       end
       result
     end
+
+    # activate the model with name
+    # param [String] name the name of the model    #
+    # activate the model found and return the model
+    # @return [Model, nil]
+    def activate_model(name)
+      model = find_model(name)
+      return nil unless ole
+      model.activate
+      model
+    end
+
+    alias :change_model :activate_model
 
     def find_by_id(id)
       models.each do |model|
@@ -435,6 +472,25 @@ module Microstation
         result << { 'model_name' => m, 'instances'=> tiarray.map{|ti| ti.to_h}}
       end
       result
+    end
+
+    protected
+
+    def model_from_ole(ole)
+      Model.new(app,self,ole)
+    end
+
+    def copy_name(backup_str = '.copy')
+      lname = self.name.dup
+      ext = File.extname(lname)
+      name = "#{File.basename(lname, ext)}#{backup_str}#{ext}"
+    end
+
+    def pdf_path(name: nil, dir: nil)
+      name = name || self.name
+      dir = Pathname(dir || self.dirname).expand_path
+      dir.mkpath unless dir.directory?
+      dir + pdf_name(name)
     end
 
 
