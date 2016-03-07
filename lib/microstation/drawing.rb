@@ -44,6 +44,12 @@ module Microstation
       @app.cad_input_queue(&block)
     end
 
+    # save the drawing as a pdf file
+    # if the name or directory is given it uses
+    # those params. If not it uses the drawing name
+    # and the drawing directory
+    # @param name - the name of the file
+    # @param dir - the directory to save the drawing
     def save_as_pdf(name: self.name , dir: self.dirname)
       out_name = Pathname(dir).expand_path + pdf_name(name)
       windows_name = app.windows_path(out_name)
@@ -58,6 +64,11 @@ module Microstation
       puts "saved #{windows_name}"
     end
 
+    # scans all the drawing models with criteria
+    # @param [Scan::Criteria] criteria
+    #
+    # calls scan_all_with_block
+    # calls scal_all_with_hash
     def scan_all(criteria,&block)
       if block
         scan_all_with_block(criteria,&block)
@@ -75,6 +86,7 @@ module Microstation
       end
     end
 
+    # @return [Boolean] is the drawing readonly?
     def read_only?
       active_model_reference.IsReadOnly
     end
@@ -87,12 +99,19 @@ module Microstation
       result
     end
 
+    # scan the drawing
+    # @param [Scan::Criteria] criteria - the criteria
+    # @param [Model]
+    # @criteria [Scan::Criteria]
     def scan(criteria = nil, model = nil, &block)
       criteria = criteria || create_scan_criteria
       model = model || default_model_reference
       model.scan(criteria,&block)
     end
 
+    # Create a new model
+    # @param [String] name - the name of the model
+    # @param [String] template - the template to use for the model
     def new_model(name,template = nil)
       template_ole = template ? template.ole_obj : app.ole_obj.ActiveDesignFile.DefaultModelReference
       el = app.ole_obj.ActiveDesignFile.Models.Add(template_ole,name,"Added ")
@@ -104,6 +123,8 @@ module Microstation
       scan_all(tags_criteria)
     end
 
+
+    # @return [Model] the ole.DefaultModelReference
     def default_model_reference
       Model.new(app,self,ole_obj.DefaultModelReference)
     end
@@ -141,6 +162,9 @@ module Microstation
       Model.new(app,self,ole)
     end
 
+    # scan all text and text regions in all
+    # models
+    # @yield [Model, String] text that is found
     def scan_all_text(&block)
       scan_all(text_criteria,&block)
     end
@@ -150,10 +174,13 @@ module Microstation
       model.scan(tags_criteria,&block)
     end
 
+     # scan all tags in drawing and
+    # @yield [Model, Tag] to the block
     def scan_all_tags(&block)
       scan_all(tags_criteria,&block)
     end
 
+    # @return [Date] date last modified
     def modified_date
       ole_obj.DateLastSaved
     end
@@ -175,18 +202,22 @@ module Microstation
       dimensions == 3
     end
 
+    # @return [String] the name of the drawing
     def name
       ole_obj.Name
     end
 
+      # @return [Pathname] the name as Pathname
     def basename
       Pathname(name)
     end
 
+      # @return [Pathname] the directory of the file
     def dirname
       Pathname(ole_obj.Path).expand_path
     end
 
+    # @return [Pathname] the complete path of file
     def path
       dirname + basename
     end
@@ -212,6 +243,9 @@ module Microstation
       app.windows_path( (Microstation.plot_driver_directory + "pdf-bw.plt").to_s)
     end
 
+     # iterate through each model in the drawing
+    # and yield them
+    # @yield [Model] model
     def each_model
       result = []
       ole_obj.Models.each do |el|
@@ -244,6 +278,8 @@ module Microstation
       result
     end
 
+     # iterates through each model calling find_by_id
+    # and returns the element found
     def find_by_id(id)
       models.each do |model|
         el = model.find_by_id(id)
