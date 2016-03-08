@@ -26,15 +26,7 @@ module Microstation
       @ole_obj = ole
     end
 
-    def ole_obj
-      begin
-        @ole_obj.ole_methods
-        @ole_obj
-      rescue => e
-        binding.pry
-        # @ole_obj = app.ole_open_drawing(self.path,read_only?)
-      end
-    end
+
 
     def active?
       ole_obj.IsActive
@@ -44,14 +36,29 @@ module Microstation
       @app.cad_input_queue(&block)
     end
 
+    # copy the drawing
+    # @param [String] name of the file
+    # @param [String,Pathname] dir
+    def copy(name: nil, dir: nil)
+      if dir.nil?
+        lname = name || copy_name
+        dir_path = self.dirname
+      else
+        lname = name || self.name
+        dir_path = Pathname(dir)
+      end
+      copy_path = dir_path + lname
+      FileUtils.copy self.path.to_s, copy_path.to_s, verbose: true
+    end
+
     # save the drawing as a pdf file
     # if the name or directory is given it uses
     # those params. If not it uses the drawing name
     # and the drawing directory
     # @param name - the name of the file
     # @param dir - the directory to save the drawing
-    def save_as_pdf(name: self.name , dir: self.dirname)
-      out_name = Pathname(dir).expand_path + pdf_name(name)
+    def save_as_pdf(name: nil , dir: nil)
+      out_name = pdf_path(name: name, dir: dir)
       windows_name = app.windows_path(out_name)
       cad_input_queue do |q|
         q << "Print Driver #{pdf_driver}"
@@ -103,7 +110,7 @@ module Microstation
     # @param [Scan::Criteria] criteria - the criteria
     # @param [Model]
     # @criteria [Scan::Criteria]
-    def scan(criteria = nil, model = nil, &block)
+    def scan(criteria: , model = default_model_reference , &block)
       criteria = criteria || create_scan_criteria
       model = model || default_model_reference
       model.scan(criteria,&block)
@@ -115,8 +122,17 @@ module Microstation
     def new_model(name,template = nil)
       template_ole = template ? template.ole_obj : app.ole_obj.ActiveDesignFile.DefaultModelReference
       el = app.ole_obj.ActiveDesignFile.Models.Add(template_ole,name,"Added ")
-      m = Model.new(app,self,el)
+      m = model_from_ole(el).activate
       m
+    end
+
+    # Find the model in the drawing
+    # @param [String] name - the name of the model
+    # @return [Model, nil] the model or nil if not found
+    def find_model(name)
+      ole = ole_obj.Models(name)
+      return nil unless ole
+      model_from_ole(ole)
     end
 
     def tags_to_hash
@@ -151,16 +167,7 @@ module Microstation
       result
     end
 
-    def get_model_for_scan(model = nil)
-      model = get_model_from_string(model) if model.is_a? String
-      model ||= default_model_reference
-      model
-    end
 
-    def get_model_from_string(model)
-      ole = ole_obj.Models(string)
-      Model.new(app,self,ole)
-    end
 
     # scan all text and text regions in all
     # models
@@ -249,7 +256,7 @@ module Microstation
     def each_model
       result = []
       ole_obj.Models.each do |el|
-        model = Model.new(app,self, el)
+        model = model_from_ole(el)
         if block_given?
           yield model
         else
@@ -278,8 +285,22 @@ module Microstation
       result
     end
 
-     # iterates through each model calling find_by_id
-    # and returns the element found
+    # activate the model with name
+    # param [String] name the name of the model
+    # activate the model found and return the model
+    # @return [Model, nil]
+    def activate_model(name)
+      model = find_model(name)
+      return nil unless ole
+      model.activate
+      model
+    end
+
+    alias :change_model :activate_model
+
+    # Iterates through all the models and finds the
+    # ole_el with id
+    # @param [String] -id
     def find_by_id(id)
       models.each do |model|
         el = model.find_by_id(id)
@@ -287,50 +308,6 @@ module Microstation
       end
     end
 
-    def ole_line_element_klass
-      @line_element ||= ole_classes.find{|c| c.name == '_LineElement'}
-    end
-
-    def ole_element_klass
-      @element_class ||= ole_classes.find{|c| c.name == '_Element'}
-    end
-
-    def app_ole_obj
-      @app_ole_obj ||= app.ole_obj
-    end
-
-    def typelib
-      @typelib  ||= app_ole_obj.ole_typelib
-    end
-
-    def ole_classes
-      @ole_classes ||= typelib.ole_classes
-    end
-
-    def create_line(p1,p2,el = nil)
-      pt1 = to_point(p1)
-      pt2 = to_point(p2)
-
-      el = WIN32OLE_VARIANT::NoParam unless el
-      begin
-        ole = app.ole_obj.CreateLineElement2(el,pt1.ole_obj,pt2.ole_obj)
-      rescue Exception => ex
-        binding.pry
-        return nil
-      end
-    end
-
-    def to_point(pt)
-      case pt
-      when Array
-        pt_a = pt.map{|p| p.to_f}
-        x,y,z = pt_a
-        z = 0 unless z
-        app.Point3d(x,y,z)
-      when Point3d
-        pt
-      end
-    end
 
     # def create_tagset_instances(name,groups)
     #   ts = tagsets[name]
@@ -473,6 +450,85 @@ module Microstation
       result
     end
 
+    protected
+
+    def ole_obj
+      begin
+        @ole_obj.ole_methods
+        @ole_obj
+      rescue => e
+        binding.pry
+        # @ole_obj = app.ole_open_drawing(self.path,read_only?)
+      end
+    end
+
+    def get_model_for_scan(model = nil)
+      model = find_model(model) if model.is_a? String
+      model ||= default_model_reference
+      model
+    end
+
+    def model_from_ole(ole)
+      Model.new(app,self,ole)
+    end
+
+    def copy_name(backup_str = '.copy')
+      lname = self.name.dup
+      ext = File.extname(lname)
+      name = "#{File.basename(lname, ext)}#{backup_str}#{ext}"
+    end
+
+    def pdf_path(name: nil, dir: nil)
+      name = name || self.name
+      dir = Pathname(dir || self.dirname).expand_path
+      dir.mkpath unless dir.directory?
+      dir + pdf_name(name)
+    end
+
+       def ole_line_element_klass
+      @line_element ||= ole_classes.find{|c| c.name == '_LineElement'}
+    end
+
+    def ole_element_klass
+      @element_class ||= ole_classes.find{|c| c.name == '_Element'}
+    end
+
+    def app_ole_obj
+      @app_ole_obj ||= app.ole_obj
+    end
+
+    def typelib
+      @typelib  ||= app_ole_obj.ole_typelib
+    end
+
+    def ole_classes
+      @ole_classes ||= typelib.ole_classes
+    end
+
+    def create_line(p1,p2,el = nil)
+      pt1 = to_point(p1)
+      pt2 = to_point(p2)
+
+      el = WIN32OLE_VARIANT::NoParam unless el
+      begin
+        ole = app.ole_obj.CreateLineElement2(el,pt1.ole_obj,pt2.ole_obj)
+      rescue Exception => ex
+        binding.pry
+        return nil
+      end
+    end
+
+    def to_point(pt)
+      case pt
+      when Array
+        pt_a = pt.map{|p| p.to_f}
+        x,y,z = pt_a
+        z = 0 unless z
+        app.Point3d(x,y,z)
+      when Point3d
+        pt
+      end
+    end
 
   end
 
