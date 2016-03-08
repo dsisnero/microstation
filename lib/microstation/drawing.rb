@@ -59,7 +59,7 @@ module Microstation
       FileUtils.copy self.path.to_s, copy_path.to_s, verbose: true
     end
 
-    def save_as_pdf(name: self.name , dir: self.dirname)
+    def save_as_pdf(name: nil , dir: nil)
       out_name = pdf_path(name: name, dir: dir)
       windows_name = app.windows_path(out_name)
       cad_input_queue do |q|
@@ -102,7 +102,7 @@ module Microstation
       result
     end
 
-    def scan(criteria = nil, model = nil, &block)
+    def scan(criteria: , model = default_model_reference , &block)
       criteria = criteria || create_scan_criteria
       model = model || default_model_reference
       model.scan(criteria,&block)
