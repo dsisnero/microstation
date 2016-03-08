@@ -26,15 +26,7 @@ module Microstation
       @ole_obj = ole
     end
 
-    def ole_obj
-      begin
-        @ole_obj.ole_methods
-        @ole_obj
-      rescue => e
-        binding.pry
-        # @ole_obj = app.ole_open_drawing(self.path,read_only?)
-      end
-    end
+
 
     def active?
       ole_obj.IsActive
@@ -154,16 +146,7 @@ module Microstation
       result
     end
 
-    def get_model_for_scan(model = nil)
-      model = get_model_from_string(model) if model.is_a? String
-      model ||= default_model_reference
-      model
-    end
 
-    def get_model_from_string(model)
-      ole = ole_obj.Models(string)
-      Model.new(app,self,ole)
-    end
 
     def scan_all_text(&block)
       scan_all(text_criteria,&block)
@@ -288,50 +271,6 @@ module Microstation
       end
     end
 
-    def ole_line_element_klass
-      @line_element ||= ole_classes.find{|c| c.name == '_LineElement'}
-    end
-
-    def ole_element_klass
-      @element_class ||= ole_classes.find{|c| c.name == '_Element'}
-    end
-
-    def app_ole_obj
-      @app_ole_obj ||= app.ole_obj
-    end
-
-    def typelib
-      @typelib  ||= app_ole_obj.ole_typelib
-    end
-
-    def ole_classes
-      @ole_classes ||= typelib.ole_classes
-    end
-
-    def create_line(p1,p2,el = nil)
-      pt1 = to_point(p1)
-      pt2 = to_point(p2)
-
-      el = WIN32OLE_VARIANT::NoParam unless el
-      begin
-        ole = app.ole_obj.CreateLineElement2(el,pt1.ole_obj,pt2.ole_obj)
-      rescue Exception => ex
-        binding.pry
-        return nil
-      end
-    end
-
-    def to_point(pt)
-      case pt
-      when Array
-        pt_a = pt.map{|p| p.to_f}
-        x,y,z = pt_a
-        z = 0 unless z
-        app.Point3d(x,y,z)
-      when Point3d
-        pt
-      end
-    end
 
     # def create_tagset_instances(name,groups)
     #   ts = tagsets[name]
@@ -476,6 +415,22 @@ module Microstation
 
     protected
 
+    def ole_obj
+      begin
+        @ole_obj.ole_methods
+        @ole_obj
+      rescue => e
+        binding.pry
+        # @ole_obj = app.ole_open_drawing(self.path,read_only?)
+      end
+    end
+
+    def get_model_for_scan(model = nil)
+      model = find_model(model) if model.is_a? String
+      model ||= default_model_reference
+      model
+    end
+
     def model_from_ole(ole)
       Model.new(app,self,ole)
     end
@@ -492,6 +447,52 @@ module Microstation
       dir.mkpath unless dir.directory?
       dir + pdf_name(name)
     end
+
+       def ole_line_element_klass
+      @line_element ||= ole_classes.find{|c| c.name == '_LineElement'}
+    end
+
+    def ole_element_klass
+      @element_class ||= ole_classes.find{|c| c.name == '_Element'}
+    end
+
+    def app_ole_obj
+      @app_ole_obj ||= app.ole_obj
+    end
+
+    def typelib
+      @typelib  ||= app_ole_obj.ole_typelib
+    end
+
+    def ole_classes
+      @ole_classes ||= typelib.ole_classes
+    end
+
+    def create_line(p1,p2,el = nil)
+      pt1 = to_point(p1)
+      pt2 = to_point(p2)
+
+      el = WIN32OLE_VARIANT::NoParam unless el
+      begin
+        ole = app.ole_obj.CreateLineElement2(el,pt1.ole_obj,pt2.ole_obj)
+      rescue Exception => ex
+        binding.pry
+        return nil
+      end
+    end
+
+    def to_point(pt)
+      case pt
+      when Array
+        pt_a = pt.map{|p| p.to_f}
+        x,y,z = pt_a
+        z = 0 unless z
+        app.Point3d(x,y,z)
+      when Point3d
+        pt
+      end
+    end
+
 
 
   end
