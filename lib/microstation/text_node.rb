@@ -2,15 +2,11 @@ module Microstation
 
   class TextNode < Element
 
-    attr_reader :original_text, :ole_obj
+    attr_reader :original, :ole_obj
 
-    def initialize(ole)
-      @ole_obj = ole
-      @original_text = ole_to_ruby(ole)
-    end
 
     def to_regexp
-      Regexp.new(original_text.to_s)
+      Regexp.new(original.to_s)
     end
 
 
@@ -27,7 +23,7 @@ module Microstation
     end
 
 
-    def ole_to_ruby(ole)
+    def read_ole(ole)
       count = ole.TextLinesCount
       #    debugger if count > 0
       str_array = []
@@ -37,9 +33,38 @@ module Microstation
       str_array.join("\n")
     end
 
-    def _update(text)
-      update_ole!(text)
-      @original_text = text
+    # def _update(text)
+    #   update_ole!(text)
+    #   @original = text
+    # end
+
+    def write_ole(text)
+      if in_cell?
+        write_ole_in_cell(text)
+      else
+        write_ole_regular(text)
+      end
+    end
+
+    def write_ole_regular(text)
+      ole_obj.DeleteAllTextLines
+      text.each_line do |line|
+        ole_obj.AddTextLine(line)
+      end
+    end
+
+    def write_ole_in_cell(text)
+      begin
+        orig_ole = ole_obj
+        new_text_ole = ole_obj.Clone
+        new_text_ole.DeleteAllTextLines
+        text.each_line do |line|
+          new_text_ole.AddTextLine(line)
+        end
+        @ole_obj = new_text_ole
+      rescue => e
+        @ole_obj = orig_ole
+      end
     end
 
     def update_ole!(text)
@@ -52,27 +77,47 @@ module Microstation
     end
 
     def to_s
-      @original_text.to_s
+      @original.to_s
+    end
+
+    def =~(reg)
+      @original =~ reg 
+    end
+
+    def template?
+      !!(@original =~ /{{.+}}/)
+    end
+
+    def render(h={})
+      return self unless  template?
+      template = Liquid::Template.parse(self.to_s)
+      result = template.render(h)
+      update(result) unless result == @original
+      self
     end
 
     def method_missing(meth,*args,&block)
-        dup = @original_text.dup
-        result = dup.send(meth,*args,&block)
-        _update(dup) unless dup == @original_text
-      result
-    end
-
-
-    def method_missing2(meth,*args,&block)
-      if meth.to_s =~ /^[A-Z]/
+      if meth =~ /^[A-Z]/
         ole_obj.send(meth,*args)
       else
-        dup = @original_text.dup
-        result = dup.send(meth,*args,&block)
-        _update(dup) unless dup == @original_text
+        copy = @original.dup
+        result = copy.send(meth,*args,&block)
+        update(result) unless copy == @original
         result
       end
     end
+
+
+    # def method_missing2(meth,*args,&block)
+    #   if meth.to_s =~ /^[A-Z]/
+    #     ole_obj.send(meth,*args)
+    #   else
+    #     dup = @original.dup
+    #     result = dup.send(meth,*args,&block)
+    #     _update(dup) unless dup == @original
+    #     result
+    #   end
+    # end
 
   end
 

@@ -15,11 +15,9 @@ require 'pathname'
   def extstr(newext='')
     Pathname.new( self.to_s.ext(newext))
   end
-
   
   def glob(pattern)
     self.class.glob("#{self.to_s}/#{pattern}")
   end
-  
 
 end

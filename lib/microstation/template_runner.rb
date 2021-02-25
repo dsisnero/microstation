@@ -5,14 +5,18 @@ module Microstation
     attr_reader :file, :template_hash
 
     def initialize(file)
+      puts "running #{file}"
       @file = file
       @template_hash = load(file)
     end
 
     def load(file)
       begin
-        YAML.load(File.open(file))
-      rescue ArgumentError => e
+        File.open(file) do |f|
+          YAML.load(f)
+        end
+      rescue => e
+        binding.pry
         puts "Could not parse YAML: #{e.message}"
       end
     end
@@ -43,14 +47,18 @@ module Microstation
     end
 
     def run(options = {})
+      begin
       the_template = Template.new(template)
       template_options = { output_dir: output_dir,
         locals: locals,
         name: name,
         tagsets: tagsets
-      }
+                         }
       run_options = template_options.merge(options)
       the_template.render(run_options)
+      rescue
+        binding.pry
+      end
     end
 
   end

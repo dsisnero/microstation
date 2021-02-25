@@ -1,53 +1,47 @@
-#require File.join(File.dirname(__FILE__) ,  'spec_helper')
-require 'spec_helper.rb'
+# frozen_string_literal: true
+
+require_relative 'spec_helper'
 
 
 describe Microstation do
+  describe '#root' do
+    subject { Microstation.root }
 
-  context "#root" do
-
-    subject { Microstation.root}
-
-    it { should be_instance_of Pathname}
-    it "to_s" do
-      expect(subject.to_s).to eq(Pathname.getwd.to_s)
+    it 'to_s' do
+      _(subject.to_s).must_equal(Pathname.getwd.to_s)
     end
-
   end
 
-
-  describe "#run" do
-    it "opens up and yields an app" do
+  describe '#run' do
+    it 'opens up and yields an app' do
       result = nil
       Microstation.run do |app|
-        expect(app).to be_instance_of(Microstation::App)
+        _(app).must_be_instance_of(Microstation::App)
       end
     end
-
-    it "can be called with implicit receiver" do
-      Microstation.run do |app|
-        expect(app).to be_an_instance_of(Microstation::App)
-      end
-    end
-
   end
 
-  describe "#get_text" do
-    let(:drawing_with_text){ drawing_path('drawing_with_block.dgn')}
-    let(:drawing_no_text){ drawing_path('drawing_no_block.dgn')}
+  describe '#get_text' do
+    let(:drawing_with_text) { drawing_path('drawing_with_text.dgn') }
+    let(:drawing_no_text) { drawing_path('drawing_no_block.dgn') }
+    let(:text_for_drawing_with_text){ [
+                                        "Four score and seven years ago our fathers brought forth",
+                                        "Out out brief candle\nLifes but a walking shadow",
+                                        "It is my lady, it is my love\nOh that she knew she were"
+                                      ]
+    }
 
-    context 'when drawing has text' do
+    describe 'when drawing has text' do
       it 'returns the text' do
-        text  = Microstation.get_text(drawing_with_text)
-        expect( text.sort()).to eq( text_for_drawing_with_block.sort())
+        text = Microstation.get_text(drawing_with_text)
+        _(text.sort).must_equal(text_for_drawing_with_text.sort)
       end
     end
 
-    context 'when drawing has no text' do
+    describe 'when drawing has no text' do
       it 'returns an empty array' do
-        expect(Microstation.get_text(drawing_no_text)).to eq( [])
+        _(Microstation.get_text(drawing_no_text)).must_equal([])
       end
     end
-
   end
 end

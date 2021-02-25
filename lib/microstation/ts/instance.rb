@@ -1,16 +1,29 @@
+class Hash
+
+  def transform(&block)
+    reduce({}) do |result, (k,v)| 
+      new_k,new_v = yield k,v
+      result[new_k] = new_v
+      result
+    end
+  end
+end
+
 module Microstation
+
   module TS
 
     class Instance
 
       include Enumerable
 
-      attr_reader :elements,:tagset,:microstation_id
+      attr_reader :elements,:tagset,:microstation_id, :microstation_model
 
-      def initialize(ts,id, elements)
+      def initialize(ts,id, elements, model)
         @tagset = ts
         @microstation_id = id
         @elements = elements
+        @microstation_model = model
       end
 
       def name
@@ -34,7 +47,7 @@ module Microstation
       end
 
       def update_element(name,value)
-        find_attribute(name)._update(value)
+        find_attribute(name).update(value)
       end
 
       def []=(name,value)
@@ -62,7 +75,8 @@ module Microstation
       end
 
       def to_h
-        result = {'tagset_name'=> tagset.name}
+        result = {'tagset_name'=> tagset.name, 'microstation_id' => microstation_id,
+                  'microstation_model' => microstation_model, }
         result['attributes'] = attribute_hash
         result
       end
@@ -106,7 +120,7 @@ module Microstation
       end
 
       def update(value_hash)
-        value_hash = value_hash.map_kv{|k,v| [k.to_s,v.to_s] }
+        value_hash = value_hash.transform{|k,v| [k.to_s,v.to_s] }
         valid_atts = attributes & value_hash.keys
         valid_atts.each do |att|
           update_element(att,value_hash[att])

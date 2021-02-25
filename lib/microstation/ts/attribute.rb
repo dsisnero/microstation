@@ -1,4 +1,5 @@
 module Microstation
+
   module TS
 
     class Attribute

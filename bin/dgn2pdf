@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-
+$LOAD_PATH.unshift('../lib')
 require 'optparse'
 require 'methadone'
 require 'microstation'
@@ -12,7 +12,6 @@ class App
 
     directory_path = Pathname.new(directory).expand_path
     exit_now! "arg directory: #{directory_path} doesn't exist" unless directory_path.directory?
-
     Microstation.dgn2pdf(directory_path, output_dir)
     # your program code here
     # You can access CLI options via

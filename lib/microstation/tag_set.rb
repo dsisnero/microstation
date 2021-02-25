@@ -1,8 +1,8 @@
 #require File.join(File.dirname(__FILE__) , 'attributes')
 require File.join(File.dirname(__FILE__), 'ts/instance')
 require File.join(File.dirname(__FILE__), 'ts/attribute')
-module Microstation
 
+module Microstation
 
   module OleCollection
 
@@ -30,14 +30,18 @@ module Microstation
   class TagSets
     include Enumerable
 
-    def initialize(ole)
+    attr_reader :drawing, :ole_obj
+
+    def initialize(drawing,ole)
+      raise if ole == nil
+      @drawing = drawing
       @ole_obj = ole
     end
 
     def init_ts
       result = []
       @ole_obj.each do |ts|
-        result << TagSet.new(ts)
+        result << TagSet.new(drawing,ts)
       end
       result
     end
@@ -48,7 +52,13 @@ module Microstation
 
     def reset
       @tagsets = nil
+      @drawing.reset_tagset_instances
     end
+
+    def names
+      self.map{|ts| ts.name}
+    end
+
 
     def tagsets
       @tagsets ||= init_ts
@@ -80,7 +90,7 @@ module Microstation
         ts.close
         ts = nil
       end
-      @tagsets = init_ts
+      reset
     end
 
     def empty?
@@ -89,13 +99,14 @@ module Microstation
 
     def create(name)
       raise if self[name]
-      ole = @ole_obj.add(name)
-      definer = Definer.new(ole)
-      yield definer if block_given?
-      @tagsets = init_ts
+     
+      ole = @ole_obj.add(name) rescue binding.pry
+     # ts = Tagset.new(ole)
+      # yield definer if block_given?
+      reset
       ts = self[name]
       raise if ts.nil?
-      definer = nil
+      yield ts if block_given?
       ts
     end
 
@@ -105,46 +116,48 @@ module Microstation
 
   end
 
-  class Definer
+  # class Definer
 
-    attr_reader :tagset
+  #   attr_reader :tagset
 
-    def initialize(tagset)
-      @tagset = tagset
-    end
+  #   def initialize(tagset)
+  #     @tagset = tagset
+  #   end
 
 
-    def add_attribute(name,type,options = {})
-      ole_td = create_ole_definition(name, type)
-      td = TS::Attribute.new(ole_td)
-      td.prompt = options[:prompt] || name
-      td.hidden = options[:is_hidden]
-      td.constant = options[:is_constant] || false
-      td.default = options[:default] if options[:default]
-      #td.hidden = td.fetch(:is_hidden)
-      yield td if block_given?
-      td
-    end
+  #   def add_attribute(name,type,prompt: name, is_hidden: false, is_constant: false, default: nil)
+  #     ole_td = create_ole_definition(name, type)
+  #     td = TS::Attribute.new(ole_td)
+  #     td.prompt = prompt
+  #     td.hidden = is_hidden
+  #     td.constant = is_constant
+  #     td.default = default
+  #     #td.hidden = td.fetch(:is_hidden)
+  #     yield td if block_given?
+  #     td
+  #   end
 
-    private
+  #   private
 
-    def tag_definitions
-      tagset.ole_tag_definitions
-    end
+  #   def tag_definitions
+  #     tagset.ole_tag_definitions
+  #   end
 
-    def close
+  #   def close
 
-    end
+  #   end
 
-    def ole_type(type)
-      TS::Attribute.tag_type(type)
-    end
+  #   def ole_type(type)
+  #     TS::Attribute.tag_type(type)
+  #   end
 
-    def create_ole_definition(name,type)
-      tag_definitions.Add(name,ole_type(type))
-    end
+  #   def create_ole_definition(name,type)
+  #     tag_definitions.Add(name,ole_type(type))
+  #   end
 
-  end
+  # end
+
+
 
   class Definition
 
@@ -154,27 +167,17 @@ module Microstation
       @tagset = tagset
     end
 
-    def add_attribute(name,type,options={})
-      td = definer.add_attribute(name,type,options)
+    def add_attribute(*args, **kwargs)
+      td = create_attribute(*args, **kwargs)
+      yield td if block_given?
       reset
       td
     end
 
-    def definer
-      @definer ||= Definer.new(tagset)
-    end
+    # def definer
+    #   @definer ||= Definer.new(tagset)
+    # end
 
-    def ole_tag_definitions
-      tagset.ole_tag_definitions
-    end
-
-    def init_definitions
-      results = []
-      ole_tag_definitions.each do |ole|
-        results << TS::Attribute.new(ole, {definer: self})
-      end
-      results
-    end
 
     def attributes
       @attributes ||= init_definitions
@@ -196,63 +199,120 @@ module Microstation
       attributes.find{|d| d.name == name}
     end
 
+    protected
+
+    # def ole_tag_definitions
+    #   tagset.ole_tag_definitions
+    # end
+
+    def ole_tag_definitions
+      @tagset.ole_obj.TagDefinitions
+    end
+
+    def create_ole_definition(name,type)
+      ole_tag_definitions.Add(name,ole_type(type))
+    end
+
+    def init_definitions
+      results = []
+      ole_tag_definitions.each do |ole|
+        results << TS::Attribute.new(ole, {definer: self})
+      end
+      results
+    end
+
+    def create_attribute(name,type,prompt: name, is_hidden: false, is_constant: false, default: nil)
+      ole_td = create_ole_definition(name, type)
+      td = TS::Attribute.new(ole_td)
+      td.prompt = prompt
+      td.hidden = is_hidden
+      td.constant = is_constant
+      td.default = default
+      yield td if block_given?
+      td
+    end
+
+    def ole_type(type)
+      TS::Attribute.tag_type(type)
+    end
+
   end
 
   class TagSet
 
     attr_reader :ole_obj
 
-    attr_reader :instances
+    attr_reader :instances, :drawing
 
-    def initialize(ole)
+    def initialize(drawing,ole)
+      @drawing = drawing
       @ole_obj = ole
-      @instances = {}
+      @instances = nil
     end
 
-    def add_attribute(name,type,options={})
-      definition.add_attribute(name,type,options)
+    def add_attribute(name,type,**options, &block)
+      ts = definition.add_attribute(name,type,**options, &block)
     end
 
-    def definer
-      @definer ||= Definer.new(self)
-    end
+    # def definer
+    #   @definer ||= Definer.new(self)
+    # end
 
-    def reset
-      @tag_definitions = nil
-    end
 
+  
     def add_instance(array)
       @instances << TS::Instance.new(self,array)
     end
 
-    def create_instance(group)
-      id, elements = group
-      TS::Instance.new(self,id,elements)
+    def create_instance(base_element_id , tags , model )
+      if @instaces.nil?
+        @instance = []
+        ti = TS::Instances.new(self, base_element_id, tags, model)
+        @instances << ti
+        ti
+     end 
+    end
+
+    def create_instance(id, elements, model)
+      if @instances.nil?
+        @instances = []
+      end
+      ti = TS::Instance.new(self,id,elements,model)
+      @instances << ti
+      ti
     end
 
     # def instances(drawing = Microstation.app.current_drawing)
     #   @instances = create_instances(drawing.scan_tags)
     # end
 
-    def find_instances_in_model(model)
-      result = create_instances(model.scan_tags)
-      instances[model.name] = result
-      result
+    # def find_instances_in_model(model)
+    #   result = create_instances(model.scan_tags)
+    #   instances[model.name] = result
+    #   result
+    # end
+
+    def instances
+      if @instances.nil? && find_tagset_instances_not_called?
+        @instances = @drawing.create_tagset_instances( ts_name: name).to_a
+      end
+      raise if find_tagset_instances_not_called?
+      @instances.nil? ? [] : @instances
     end
 
-    def create_instances(tags)
-      mytags = tags_for_self(tags)
-      grouped = grouped_tags_to_host(mytags)
-      grouped.map{|group| create_instance(group)}
-    end
 
-    def all_tags_in_drawing
-      Microstation.app.current_drawing.scan_tags
-    end
 
-    def definition
-      @definition ||= Definition.new(self)
-    end
+
+    # def create_instances_from_drawing(drawing)
+    #   mytags = tags_for_self(tags)
+    #   grouped = grouped_tags_to_host(mytags)
+    #   grouped.map{|group| create_instance(group)}
+    # end
+
+    # def all_tags_in_drawing
+    #   Microstation.app.current_drawing.scan_tags
+    # end
+
 
     def close
       @ole_obj = nil
@@ -282,19 +342,42 @@ module Microstation
       definition[name]
     end
 
-   # protected
+    protected
 
-     def tags_for_self(tags)
-      tags.select{|t| t.tagset_name == name}
+    def definition
+      @definition ||= Definition.new(self)
     end
 
-    def grouped_tags_to_host(tags)
-      tags.group_by{|t| t.base_element_id}
+    def reset
+      @tag_definitions = nil
     end
 
-      def ole_tag_definitions
-      @ole_obj.TagDefinitions
+
+    def find_tagset_instances_not_called?
+      !drawing.find_tagset_instances_called?
     end
+
+
+    # def create_ole_definition(name,type)
+    #   ole_tag_definitions.Add(name, ole_type(type))
+    # end
+
+    private
+
+    # protected
+
+    # def tags_for_self(tags)
+    #   tags.select{|t| t.tagset_name == name}
+    # end
+
+    # def grouped_tags_to_host(tags)
+    #   tags.group_by{|t| t.base_element_id}
+    # end
+
+    # def ole_tag_definitions
+    #   @ole_obj.TagDefinitions
+    # end
+    
 
 
   end

@@ -4,13 +4,21 @@ module Microstation
 
   class Text < Element
 
-    def initialize(ole)
-      @ole_obj = ole
-      @original_text = @ole_obj.Text
+
+    def read_ole(ole)
+      ole_obj.Text
+    end
+
+    def write_ole(text)
+      ole_obj.Text = text
     end
 
     def to_regexp
-      Regexp.new(@original_text.to_s)
+      Regexp.new(read_ole.to_s)
+    end
+
+    def =~(reg)
+      @original =~ reg
     end
 
 
@@ -26,16 +34,33 @@ module Microstation
     # end
 
     def to_s
-      @original_text.to_s
+      original.to_s
+    end
+
+    def bounds
+      binding.pry
+      rotation = ole_obj.Rotation
+      inverse_rotation = app_ole_obj.Matrix3dInverse(rotation) rescue pry
+      transform = app_ole_obj.Transform3dFromMatrix3dandFixedPoint3d(app_ole_obj.Matrix3dInverse(rotation), ole_obj.origin)
+      ole_obj.transform transform
+      pts = []
+
+      0.upto(4)  do |i|
+        points[i] = ole_obj.Boundary.Low
+      end
+      points[2] = self.Boundary.High
+      points[1].X = points[2].x
+      points[3].y = points[2].Y
+
     end
 
     def method_missing(meth,*args, &block)
       if meth =~ /^[A-Z]/
-        @ole_obj.send(meth,*args)
+        ole_obj.send(meth,*args)
       else
-        dup = @original_text.dup
+        dup = @original.dup
         result = dup.send(meth,*args, &block)
-        _update(dup) unless dup == @original_text
+        update(result) 
         result
       end
     end
@@ -48,13 +73,6 @@ module Microstation
     # end
 
 
-    def _update(text)
-      @ole_obj.Text = text
-      @original_text = text
-      @ole_obj.Redraw Microstation::MSD::MsdDrawingModeNormal
-      @ole_obj.Rewrite
-      @original_text = text
-    end
 
   end
 

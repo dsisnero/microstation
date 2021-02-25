@@ -84,20 +84,33 @@ module Microstation
         end
       end
 
+      def include_cell_header
+        self.include_type(::Microstation::MSD::MsdElementTypeCellHeader)
+      end
+
+      def include_shared_cell
+        self.include_type(::Microstation::MSD::MsdElementTypeSharedCell)
+      end
+
+      def include_cells
+        include_cell_header
+        include_shared_cell
+      end
+
       def include_dimensions
-        self.include_type(Microstation::MSD::MdsElementTypeDimension)
+        self.include_type(::Microstation::MSD::MsdElementTypeDimension)
       end
 
       def include_text
-        self.include_type(Microstation::MSD::MsdElementTypeText)
+        self.include_type(::Microstation::MSD::MsdElementTypeText)
       end
 
       def include_tags
-        self.include_type Microstation::MSD::MsdElementTypeTag
+        self.include_type ::Microstation::MSD::MsdElementTypeTag
       end
 
       def include_text_nodes
-        self.include_type Microstation::MSD::MsdElementTypeTextNode
+        self.include_type ::Microstation::MSD::MsdElementTypeTextNode
       end
 
       def include_textual
@@ -106,7 +119,11 @@ module Microstation
       end
 
       def include_solids
-        self.include_type Microstation::MSD::MsdElementTypeSolid
+        self.include_type ::Microstation::MSD::MsdElementTypeSolid
+      end
+
+      def include_lines
+        self.include_type ::Microstation::MSD::MsdElementTypeLine
       end
 
 

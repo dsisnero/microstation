@@ -8,10 +8,12 @@ require 'microstation/ext/pathname'
 require 'microstation/cad_input_queue'
 require 'microstation/scan/criteria'
 require 'microstation/enumerator'
+require 'microstation/line'
 require 'microstation/text'
 require 'microstation/text_node'
 require 'microstation/template'
 require 'microstation/tag_set'
+require 'microstation/cell'
 require 'microstation/tag'
 require 'microstation/dir'
 require 'microstation/ext/win32ole'
@@ -21,143 +23,222 @@ require 'erb'
 
 module Microstation
 
+  ROOT = Pathname(__dir__).parent
 
-  def self.root
-    Pathname.new( File.dirname(__FILE__)).parent
-  end
+  TEMPLATES_PATH = ROOT + 'templates'
+  
+  class << self
 
-
-  def self.app
-    @app ||= Microstation::App.new
-  end
-
-
-  def self.plot_driver_directory
-    root + "plot"
-  end
-
-  def self.use_template(template,context)
-    def context.binding
-      binding
-    end
-    opts = {:read_only => true}
-    Microstation::App.run do |app|
-      tmpfile = Tempfile.new('drawing')
-      app.new_drawing(tmpfile,template) do |drawing|
-        drawing.scan_text do |text|
-          compiled_template = ERB.new(text)
-          new_text = compiled_template.result(context.binding)
-          text = new_text
-        end
+    def save_as_pdf(d)
+      run do |app|
+        drawing = app.current_drawing
+        drawing.save_as_pdf(dir: d)
+        drawing.close
       end
     end
-    tempfile.read
-  end
 
-  def self.drawings_in_dir(dir)
-    dirpath = Pathname.new(dir).expand_path
-    drawings = Pathname.glob("#{dirpath}/*.d{gn,wg}")
-  end
-
-  def self.dump_template_info(dir)
-    drawings = drawings_in_dir(dir)
-    self.with_drawings(drawings) do |drawing|
-      template = TemplateInfo.new(drawing)
-      template.dump(dir)
+    def default_error_proc
+      @default_error_proc ||= ->(e,f){ puts "Couldn't open drawing #{f}" }
     end
-  end
 
-  def self.dgn2pdf(dir,output = dir)
-    drawings = drawings_in_dir(dir)
-    self.with_drawings(drawings) do |drawing|
-      drawing.save_as_pdf(drawing.name,output)
+    def default_drawing_options
+      {read_only: true, error_proc: default_error_proc}
     end
-  end
 
-  def self.run_templates_in_dir(dir)
-    self.run do |app|
-      app.run_templates_in_dir(dir)
+    def default_error_proc=(p)
+      @default_error_proc = p
     end
-  end
 
-  def self.open_drawing(drawing,options = {}, &block)
-    Microstation::App.open_drawing(drawing,options,&block)
-  end
-
-  def self.with_drawings_in_dir(dir,&block)
-    drawings = self.drawings_in_dir(dir)
-    self.with_drawings(drawings,&block)
-  end
-
-  def self.with_drawings(*files, &block)
-    Microstation::App.with_drawings(*files,&block)
-  end
-
-  def self.scan_text(file,&block)
-    Microstation.open_drawing(file) do |d|
-      d.scan_text(&block)
+    def default_app_options
+      @default_app_options
     end
-  end
 
-  def self.get_text(file)
-    result = []
-    Microstation.open_drawing(file) do |d|
-      result = d.get_text
+    def default_app_options=(opts)
+      @default_app_options = opts 
     end
-    result
-  end
 
-  def self.get_all_text(file)
-    Microstation.open_drawing(file) do |d|
-      d.get_all_text
-    end
-  end
+    default_app_options = {visible: false}
 
-  def self.run(options={}, &block)
-    options = {:visible => false}.merge(options)
-    begin
-      app = Microstation::App.new(options)
-      block.arity < 1 ? app.instance_eval(&block) : block.call(app)
-    ensure
-      app.quit rescue nil
-      app = nil
+    def root
+      ROOT 
     end
+
+    def plot_driver_directory
+      root + "plot"
+    end
+
+    def use_template(template,context, options ={} )
+      def context.binding
+        binding
+      end
+      options = {readonly: true}
+      App.run do |app|
+        tmpfile = Tempfile.new('drawing')
+        app.new_drawing(tmpfile,template) do |drawing|
+          drawing.scan_text do |text|
+            compiled_template = ERB.new(text)
+            new_text = compiled_template.result(context.binding)
+            text = new_text
+          end
+        end
+      end
+      tempfile.read
+    end
+
+    # starts an app with drawing, opens a temp
+    # copy of the drawing and yields it
+    # saves the drawing with with name or output_dir
+    # same name
+    #
+    # @param dgn
+    # @yield [Drawing]
+    def change_drawing(...)
+      App.change_drawing(...)
+    end
+
+    # gets all dwg and dgn dfiles in a directory
+    # @param dir 
+    def drawings_in_dir(dir)
+      dirpath = Pathname.new(dir).expand_path
+      drawings = Pathname.glob("#{dirpath}/*.d{gn,wg,xf}")
+    end
+
+    def dump_template_info_for_dir(dir, options={})
+      drawings = drawings_in_dir(dir)
+      raise "no drawings in dir #{dir}" if drawings.empty?
+      with_drawings(drawings) do |drawing|
+        template = TemplateInfo.new(drawing,options)
+        template.dump(dir)
+      end
+    end
+
+    def dump_template_info(dgn, dir: nil,  tagset_filter: nil, visible: false)
+      drawing = Pathname(dgn).expand_path
+      output_dir = dir || drawing.parent
+      template = TemplateInfo.new(drawing,tagset_filter: tagset_filter, visible: visible)
+      template.dump(output_dir)
+    end
+
+    # @param dir [String] the directory of drawing [dgn,dwg] to convert
+    # @param outdir [String] the output dir for converted pdf files
+    def dgn2pdf(dir,outdir = dir)
+      drawings = drawings_in_dir(dir)
+      with_drawings(drawings) do |drawing|
+        drawing.save_as_pdf(name: drawing.name,dir: outdir)
+      end
+    end
+
+    def run_templates_in_dir(...)
+      App.run_templates_in_dir(...)
+    end
+
+    # starts app, opens drawing, and yields
+    # the drawing before closing drawing and
+    # quitting the app
+    def open_drawing(...)
+      App.open_drawing(...)
+    end
+
+    # opens all the drawings in a drawing
+    # by calling open drawing
+    def with_drawings_in_dir(dir,...)
+      drawings = drawings_in_dir(dir)
+      with_drawings(drawings,...)
+    end
+
+    
+    def with_drawings(...)
+      App.with_drawings(...) 
+    end
+
+    def scan_text(file,&block)
+      App.open_drawing(file) do |d|
+        d.scan_text(&block)
+      end
+    end
+
+    def get_text(file, &block)
+      App.open_drawing(file) do |d|
+        d.get_text(&block)
+      end
+    end
+
+    def get_all_text(file)
+      App.open_drawing(file) do |d|
+        d.get_all_text
+      end
+    end
+
+    def save_current_drawing(dir, exit: true)
+      if exit
+        run do |app|
+          drawing = app.current_drawing
+          drawing.copy(dir: dir)
+          drawing.save_as_pdf(dir: dir)
+          drawing.close
+        end
+      else
+        app = App.new
+        drawing = app.current_drawing
+        drawing.copy(dir: dir)
+        drawing.save_as_pdf(dir: dir)
+        app
+      end
+    end
+
+    def save_current_drawing_as_pdf(dir)
+      App.run do |app|
+        drawing = app.current_drawing
+        drawing.save_as_pdf(dir: dir)
+        drawing.close
+      end
+    end
+
+    def run(...)
+      App.run(...)
+    end
+
   end
 
 end
-
 
 if $0 == __FILE__
 
   require 'pry'
 
   app = Microstation::App.new
+  require 'microstation/ole_helper'
+
+  File.open('app_methods.txt','w') do |f|
+    f.write app.ole_obj.ole_methods_detail
+  end
+
   tlib = app.ole_obj.ole_typelib
   File.open('microstation_classes.txt','w') do |f|
-    tlib.ole_classes.each do |k|
-      if k.ole_type == "Class"
-        f.puts k.name
-        f.puts k.progid
-        f.puts k.guid
-        f.puts "---"
-      end
-    end
+    f.write app.ole_obj.ole_classes_detail
   end
-  drawing = app.new_drawing('mynew.dgn')
 
-  le =tlib.ole_classes.find{|c| c.name == 'LineElement'}
-  #puts drawing.model_names
+  ole_obj = app.ole_obj
 
-  VT = WIN32OLE::VARIANT
-  # Type.Missing equivalent
-
-  e1 = WIN32OLE_VARIANT::NoParam
-  e2 = WIN32OLE_VARIANT.new(nil, VT::VT_VARIANT|VT::VT_BYREF)
+  event_classes = ole_obj.select_ole_type('event')
+  puts event_classes
 
 
-  drawing.change_model('Default')
-  line = drawing.create_line [1,0.5],[1,1,0],e1
-  drawing.add_line line if line
+  # drawing = app.new_drawing('mynew.dgn')
+
+  # le =tlib.ole_classes.find{|c| c.name == 'LineElement'}
+  # #puts drawing.model_names
+
+  # VT = WIN32OLE::VARIANT
+  # # Type.Missing equivalent
+
+  # e1 = WIN32OLE_VARIANT::NoParam
+  # e2 = WIN32OLE_VARIANT.new(nil, VT::VT_VARIANT|VT::VT_BYREF)
+
+
+  # drawing.change_model('Default')
+  # line = drawing.create_line [1,0.5],[1,1,0],e1
+  # drawing.add_line line if line
 
 
 

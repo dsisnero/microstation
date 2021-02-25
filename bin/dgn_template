@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require 'gli'
+$LOAD_PATH.unshift(File.join(__dir__, 'lib'))
 
 begin # XXX: Remove this begin/rescue before distributing your app
   require 'microstation'
@@ -10,87 +11,97 @@ rescue LoadError
   exit 64
 end
 
-include GLI::App
 
+module Cli
+  include GLI::App
 
-version Microstation::VERSION
+  extend self
 
-subcommand_option_handling :normal
-arguments :strict
+  program_desc "Create drawings from dgn templates and yaml files describing changes"
 
-# desc 'Describe some switch here'
-# switch [:s,:switch]
+  version Microstation::VERSION
 
-# desc 'Describe some flag here'
-# default_value 'the default'
-# arg_name 'The name of the argument'
-# flag [:f,:flagname]
+  subcommand_option_handling :normal
+  arguments :strict
 
-desc 'create template description files to fill out'
-long_desc "
+  # desc 'Describe some switch here'
+  # switch [:s,:switch]
+
+  # desc 'Describe some flag here'
+  # default_value 'the default'
+  # arg_name 'The name of the argument'
+  # flag [:f,:flagname]
+
+  desc 'create template description files to fill out'
+  long_desc "
 Given a directory, this will generate yaml files describing
 the fields and tagsets of dgn files in the directory
 "
 
-arg 'dir'
-command :dump do |c|
- # c.desc ''
- # c.switch :s
+  arg 'dir'
+  command :dump do |c|
+    # c.desc ''
+    # c.switch :s
 
-  c.desc 'file to run dump on'
-  #  c.default_value 'default'
-  c.flag [:f, :filename]
-  c.action do |global_options,options,args|
+    c.desc 'file to run dump on'
+    #  c.default_value 'default'
+    c.flag [:f, :filename]
+    c.action do |global_options,options,args|
 
-    # Your command logic here
+      # Your command logic here
 
-    # If you have any errors, just raise them
-    # raise "that command made no sense"
-    if options[:f]
-      puts "file dump ran with file option #{options[:f]}"
-    else
-      help_now!('dir is required') if args.empty?
-      Microstation.dump_template_info args.first
+      # If you have any errors, just raise them
+      # raise "that command made no sense"
+      if file=options[:f]
+        puts "file dump ran with file option #{options[:f]}"
+        
+        Microstation.dump_template_info(file, visible: true)
+      else
+        help_now!('dir is required') if args.empty?
+        Microstation.dump_template_info_for_dir args.first
+      end
     end
   end
-end
 
-desc 'Run the template description files'
-arg :dir, :optional
-command :run do |c|
+  desc 'Run the template description files'
+  arg :dir, :optional
+  command :run do |c|
 
-  c.desc 'file to run'
-  c.flag [:f, :filename]
-  c.action do |global_options,options,args|
-    if options[:f]
-      puts "Running run on file #{options[:f]}"
-    else
-      dir = args.shift
-      help_now!('arg "dir" is required if no :filename flag set') unless dir
-      Microstation.run_templates_in_dir(dir)
+    c.desc 'file to run'
+    c.flag [:f, :filename]
+    c.action do |global_options,options,args|
+      if options[:f]
+        puts "Running run on file #{options[:f]}"
+
+      else
+        dir = args.shift
+        help_now!('arg "dir" is required if no :filename flag set') unless dir
+        Microstation.run_templates_in_dir(dir)
+      end
     end
   end
-end
 
-pre do |global,command,options,args|
-  # Pre logic here
-  # Return true to proceed; false to abort and not call the
-  # chosen command
-  # Use skips_pre before a command to skip this block
-  # on that command only
-  true
-end
+  pre do |global,command,options,args|
+    # Pre logic here
+    # Return true to proceed; false to abort and not call the
+    # chosen command
+    # Use skips_pre before a command to skip this block
+    # on that command only
+    true
+  end
 
-post do |global,command,options,args|
-  # Post logic here
-  # Use skips_post before a command to skip this
-  # block on that command only
-end
+  post do |global,command,options,args|
+    # Post logic here
+    # Use skips_post before a command to skip this
+    # block on that command only
+  end
 
-on_error do |exception|
-  # Error logic here
-  # return false to skip default error handling
-  true
-end
+  on_error do |exception|
+    # Error logic here
+    # return false to skip default error handling
+    true
+  end
 
-exit run(ARGV)
+  exit run(ARGV)
+
+end

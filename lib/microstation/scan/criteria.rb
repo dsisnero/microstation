@@ -5,6 +5,7 @@ require_relative 'color'
 require_relative 'line_style'
 require_relative 'line_weight'
 require_relative 'subtype'
+require_relative 'range'
 
 module Microstation
 
@@ -31,11 +32,12 @@ module Microstation
       include Scan::LineStyle
       include Scan::LineWeight
       include Scan::Subtype
+      include Scan::Range
 
       attr_reader :app
 
-      def self.create_scanner(name, app,&block)
-        sc = create(name=nil,app)
+      def self.create_scanner(name=nil, app,&block)
+        sc = create(name,app)
         return sc unless block
         block.arity < 1 ? sc.instance_eval(&block) : block.call(sc)
         sc
@@ -54,7 +56,7 @@ module Microstation
       def initialize(app)
         @app = app
         @ole_obj = @app.create_ole_scan_criteria
-        @app.load_constants # unless defined? Microstation::MSD
+        @app.load_constants unless defined? ::Microstation::MSD
       end
 
       def resolve

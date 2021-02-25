@@ -1,0 +1,35 @@
+#!/usr/bin/env ruby
+require 'optparse'
+require 'methadone'
+
+require 'microstation'
+require 'microstation/extensions/faa'
+require 'pry'
+
+class PwApp
+  include Methadone::Main
+  include Methadone::CLILogging
+
+  main do
+    directory_path = Pathname( options['save-dir']).expand_path
+    exit_now! "arg directory: #{directory_path} doesn't exist" unless directory_path.directory?
+
+
+    app =Microstation.save_current_drawing(directory_path,exit: options['exit'])
+    binding.pry unless options['exit']
+    
+
+  end
+
+  description "Save the currently open projectwise drawing"
+
+  options['save-dir'] = Pathname.getwd
+  options['exit'] = true
+  on("-d DIR", "--save-dir", "Set the location of the save dir")
+  on("-e", "--[no-]exit",TrueClass, "Close the Microstation instance")
+
+  version Microstation::VERSION
+
+  use_log_level_option
+  go!
+end

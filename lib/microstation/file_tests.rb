@@ -4,16 +4,22 @@ module Microstation
 
 
     def microstation_drawing?(f)
+      f = f.to_path if f.respond_to? :to_path
+      f = f.to_str
       File.file?(f) && File.extname(f) == '.dgn'
     end
 
     def drawing?(f)
+      f = f.to_path if f.respond_to? :to_path
+      f = f.to_str
       File.file?(f) && drawing_type?(f)
     end
 
 
-    def drawing_type?(fname)
-      ext = File.extname(fname)
+    def drawing_type?(f)
+      f = f.to_path if f.respond_to? :to_path
+      f = f.to_str
+      ext = File.extname(f)
       ext == '.dwg' || ext == '.dgn'
     end
 

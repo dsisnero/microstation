@@ -1,7 +1,83 @@
 module Microstation
 
-  class VariableDefined < ::StandardError
+  class Capabilities
+
+    attr_reader :variable, :capabilities
+
+    def initialize(config,variable)
+      @config = config
+      @variable = variable
+      @capabilities = get_capabilities
     end
+
+    def get_capabilities
+      @capabilities = @config[variable].split(';')
+    end
+
+
+    def search(name)
+      @capabilities.select{|c| c =~ Regexp.new(Regexp.escape(name), Regexp::IGNORECASE)}
+    end
+
+    def enabled
+      @capabilities.select{|c| c.start_with?('+')}
+    end
+
+    def disabled
+      @capabilities.select{|c| c.start_with?('-')}
+    end
+
+    def enabled?(name)
+      capa = remove_prefix(name)
+      @capabilities.any?{|c| c == "+#{capa}"}
+    end
+
+    def disabled?(name)
+      capa = remove_prefix(name)
+      @capabilities.any?{|c| c == "-#{capa}"}
+    end
+
+    def write_configuration
+      caps = @capabilities.uniq.join(';')
+      @config.set!(variable, caps)
+    end
+
+    def prepend(value)
+      @config.prepend(variable,value)
+    end
+
+    def enable(name)
+      return if enabled?(name) && !disabled?(name)
+      capa = remove_prefix(name)
+      @capabilities.delete("-#{capa}")
+      @capabilities.unshift("+#{capa}")
+      write_configuration
+      get_capabilities
+      self
+    end
+
+    def disable(name)
+      return if disabled?(name)  && !enabled?(name)
+      capa = remove_prefix(name)
+      capabilities.delete("+#{name}")
+      @capabilities.unshift("-#{capa}")
+      write_configuration
+      get_capabilities
+      self
+    end
+
+    def remove_prefix(name)
+      if name =~ /[+-](.+)/
+        name = Regexp.last_match(1)
+      end
+      name
+    end
+
+
+  end
+
+  class VariableDefined < ::StandardError
+  end
 
 
   class App
@@ -11,8 +87,6 @@ module Microstation
     end
 
   end
-
-
 
   class Configuration
 
@@ -42,21 +116,16 @@ module Microstation
 
     def [](variable)
       return nil unless exists? variable
-     get(variable)
+      get(variable)
     end
 
-    def should_update?(key,options={force: false})
-      return true unless exists? key
-      force = options.fetch(:force){ false}
-      return !!force
-    end
 
     def remove_variable(variable)
       workspace.RemoveConfigurationVariable variable
     end
 
     def set(key,value,options = {})
-      raise Microstation::VariableDefined unless should_update?(key,options)
+      raise VariableDefined unless should_update?(key,options)
       set!(key,value)
     end
 
@@ -68,13 +137,16 @@ module Microstation
 
     def []=(key,value)
       set(key,value)
-     end
-
-
+    end
 
     def exists?(value)
       workspace.IsConfigurationVariableDefined(value)
     end
+
+    def capabilities_all
+      @workmode_all ||= Capabilities.new(self,'_USTN_CAPABILITY')
+    end
+
 
     def expand(string)
       workspace.ExpandConfigurationVariable(string)
@@ -85,11 +157,37 @@ module Microstation
       @app.active_workspace
     end
 
-  def get(variable)
+    def get(variable)
       workspace.ConfigurationVariableValue(variable)
     end
 
+    def should_update?(key,options={force: false})
+      return true unless exists? key
+      force = options.fetch(:force){ false}
+      return !!force
+    end
 
   end
+
+
+  class App
+
+    def capabilities(mode = :all)
+      case mode
+      when :all
+        configuration.capabilities_all
+      when :dwg
+        configuration.capabilites_dwg
+      when :v7
+        configuration.capabilities_v7
+      else
+        configuration_capabilities_all
+      end
+
+    end
+
+  end
+
+
 
 end

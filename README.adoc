@@ -89,7 +89,7 @@ Using `bundle update` is *not* recommended as it will also update other gems, wh
           text.reverse! if text =~ /Reverse/  # things that modify thetext_in_drawing 
           puts text.to_s
        end
-       drawing.scan( sc) do |ele|
+       drawing.scan_model( sc) do |ele|
           
        end
 
