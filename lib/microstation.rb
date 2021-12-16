@@ -50,7 +50,7 @@ module Microstation
     end
 
     def default_app_options
-      @default_app_options
+       @default_app_options
     end
 
     def default_app_options=(opts)
@@ -100,7 +100,7 @@ module Microstation
     # @param dir 
     def drawings_in_dir(dir)
       dirpath = Pathname.new(dir).expand_path
-      drawings = Pathname.glob("#{dirpath}/*.d{gn,wg,xf}")
+      drawings = dirpath.glob("*.d{gn,wg,xf}").sort_by{ _1.basename('.*').to_s.downcase }
     end
 
     def dump_template_info_for_dir(dir, options={})
@@ -152,19 +152,19 @@ module Microstation
     end
 
     def scan_text(file,&block)
-      App.open_drawing(file) do |d|
+      ::App.open_drawing(file) do |d|
         d.scan_text(&block)
       end
     end
 
     def get_text(file, &block)
-      App.open_drawing(file) do |d|
-        d.get_text(&block)
+      ::App.open_drawing(file) do |d|
+         d.get_text(&block)
       end
     end
 
     def get_all_text(file)
-      App.open_drawing(file) do |d|
+      ::App.open_drawing(file) do |d|
         d.get_all_text
       end
     end
@@ -193,8 +193,8 @@ module Microstation
         drawing.close
       end
     end
-
-    def run(...)
+ 
+    def run(options={}, &block)
       App.run(...)
     end
 
@@ -213,7 +213,7 @@ if $0 == __FILE__
     f.write app.ole_obj.ole_methods_detail
   end
 
-  tlib = app.ole_obj.ole_typelib
+  tlib = app.ole_obj.ole_typelib 
   File.open('microstation_classes.txt','w') do |f|
     f.write app.ole_obj.ole_classes_detail
   end
