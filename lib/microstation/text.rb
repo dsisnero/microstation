@@ -1,11 +1,8 @@
 require 'microstation/element'
 
 module Microstation
-
   class Text < Element
-
-
-    def read_ole(ole)
+    def read_ole(_ole)
       ole_obj.Text
     end
 
@@ -20,7 +17,6 @@ module Microstation
     def =~(reg)
       @original =~ reg
     end
-
 
     # def microstation_id
     #   @ole_obj.Id || @ole_obj.ID64
@@ -40,27 +36,31 @@ module Microstation
     def bounds
       binding.pry
       rotation = ole_obj.Rotation
-      inverse_rotation = app_ole_obj.Matrix3dInverse(rotation) rescue pry
-      transform = app_ole_obj.Transform3dFromMatrix3dandFixedPoint3d(app_ole_obj.Matrix3dInverse(rotation), ole_obj.origin)
+      inverse_rotation = begin
+        app_ole_obj.Matrix3dInverse(rotation)
+      rescue StandardError
+        pry
+      end
+      transform = app_ole_obj.Transform3dFromMatrix3dandFixedPoint3d(app_ole_obj.Matrix3dInverse(rotation),
+                                                                     ole_obj.origin)
       ole_obj.transform transform
       pts = []
 
-      0.upto(4)  do |i|
+      0.upto(4) do |i|
         points[i] = ole_obj.Boundary.Low
       end
       points[2] = self.Boundary.High
       points[1].X = points[2].x
       points[3].y = points[2].Y
-
     end
 
-    def method_missing(meth,*args, &block)
+    def method_missing(meth, *args, &block)
       if meth =~ /^[A-Z]/
-        ole_obj.send(meth,*args)
+        ole_obj.send(meth, *args)
       else
         dup = @original.dup
-        result = dup.send(meth,*args, &block)
-        update(result) 
+        result = dup.send(meth, *args, &block)
+        update(result)
         result
       end
     end
@@ -71,9 +71,5 @@ module Microstation
     #     _update(dup) unless dup == @original_text
     #   result
     # end
-
-
-
   end
-
 end

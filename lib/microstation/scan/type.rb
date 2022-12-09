@@ -1,9 +1,6 @@
 module Microstation
-
   module Scan
-
     module Type
-
       # MsdElementTypeCellLibraryHeader
       # MsdElementTypeCellHeader
       # MsdElementTypeLine
@@ -78,6 +75,7 @@ module Microstation
 
       def resolve_type_scans
         return unless type_inclusions.size > 0
+
         reset_ole_types
         type_inclusions.each do |type|
           ole_obj.IncludeType(type)
@@ -85,11 +83,11 @@ module Microstation
       end
 
       def include_cell_header
-        self.include_type(::Microstation::MSD::MsdElementTypeCellHeader)
+        include_type(::Microstation::MSD::MsdElementTypeCellHeader)
       end
 
       def include_shared_cell
-        self.include_type(::Microstation::MSD::MsdElementTypeSharedCell)
+        include_type(::Microstation::MSD::MsdElementTypeSharedCell)
       end
 
       def include_cells
@@ -98,19 +96,19 @@ module Microstation
       end
 
       def include_dimensions
-        self.include_type(::Microstation::MSD::MsdElementTypeDimension)
+        include_type(::Microstation::MSD::MsdElementTypeDimension)
       end
 
       def include_text
-        self.include_type(::Microstation::MSD::MsdElementTypeText)
+        include_type(::Microstation::MSD::MsdElementTypeText)
       end
 
       def include_tags
-        self.include_type ::Microstation::MSD::MsdElementTypeTag
+        include_type ::Microstation::MSD::MsdElementTypeTag
       end
 
       def include_text_nodes
-        self.include_type ::Microstation::MSD::MsdElementTypeTextNode
+        include_type ::Microstation::MSD::MsdElementTypeTextNode
       end
 
       def include_textual
@@ -119,16 +117,12 @@ module Microstation
       end
 
       def include_solids
-        self.include_type ::Microstation::MSD::MsdElementTypeSolid
+        include_type ::Microstation::MSD::MsdElementTypeSolid
       end
 
       def include_lines
-        self.include_type ::Microstation::MSD::MsdElementTypeLine
+        include_type ::Microstation::MSD::MsdElementTypeLine
       end
-
-
     end
-
   end
-
 end

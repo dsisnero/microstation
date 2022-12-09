@@ -1,9 +1,6 @@
 module Microstation
-
   module TS
-
     class Attribute
-
       attr_reader :ole_obj
 
       # msdTagTypeCharacter 1 (&H1)
@@ -16,15 +13,15 @@ module Microstation
         1 => String,
         2 => Integer,
         3 => Integer,
-        4 => Float,
+        4 => Float
         #   5 => Binary
       }
 
       RUBY_TO_MS = TYPES.invert
 
       def self.tag_type(type)
-        if type.class == Symbol
-          ruby_type = case type
+        ruby_type = if type.instance_of?(Symbol)
+                      case type
                       when :char
                         String
                       when :int
@@ -34,9 +31,9 @@ module Microstation
                       else
                         :char
                       end
-        else
-          ruby_type = type
-        end
+                    else
+                      type
+                    end
 
         RUBY_TO_MS[ruby_type]
       end
@@ -104,9 +101,10 @@ module Microstation
       end
 
       def hidden=(hidden)
-        bool =  hidden ? true :false
+        bool = hidden ? true : false
         @ole_obj.IsHidden = bool
       end
+
       def prompt
         @ole_obj.Prompt
       end
@@ -131,10 +129,8 @@ module Microstation
       end
 
       def ==(other)
-        @ole_obj.Name == other.ole_obj.Name  && @ole_obj.TagSetName == other.ole_obj.TagSetName && @ole_obj.TagType == other.ole_obj.TagType
+        @ole_obj.Name == other.ole_obj.Name && @ole_obj.TagSetName == other.ole_obj.TagSetName && @ole_obj.TagType == other.ole_obj.TagType
       end
-
     end
-
   end
 end

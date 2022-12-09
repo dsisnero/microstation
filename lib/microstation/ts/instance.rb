@@ -1,25 +1,20 @@
 class Hash
-
-  def transform(&block)
-    reduce({}) do |result, (k,v)| 
-      new_k,new_v = yield k,v
+  def transform
+    each_with_object({}) do |(k, v), result|
+      new_k, new_v = yield k, v
       result[new_k] = new_v
-      result
     end
   end
 end
 
 module Microstation
-
   module TS
-
     class Instance
-
       include Enumerable
 
-      attr_reader :elements,:tagset,:microstation_id, :microstation_model
+      attr_reader :elements, :tagset, :microstation_id, :microstation_model
 
-      def initialize(ts,id, elements, model)
+      def initialize(ts, id, elements, model)
         @tagset = ts
         @microstation_id = id
         @elements = elements
@@ -35,7 +30,7 @@ module Microstation
       end
 
       def find_attribute(name)
-        @elements.find{|a| a.name == name.to_s}
+        @elements.find { |a| a.name == name.to_s }
       end
 
       def [](name)
@@ -43,15 +38,15 @@ module Microstation
       end
 
       def attributes
-        @elements.map{|e| e.name}
+        @elements.map { |e| e.name }
       end
 
-      def update_element(name,value)
+      def update_element(name, value)
         find_attribute(name).update(value)
       end
 
-      def []=(name,value)
-        update_element(name,value)
+      def []=(name, value)
+        update_element(name, value)
       end
 
       def element_value(name)
@@ -61,13 +56,13 @@ module Microstation
       def to_hash
         result = {}
         @elements.each do |ele|
-          result[ele.name] = ele.value unless (ele.value == "" || ele.value.nil?)
+          result[ele.name] = ele.value unless ele.value == '' || ele.value.nil?
         end
         result
       end
 
       def attribute_hash
-        result = {"microstation_id" => microstation_id}
+        result = { 'microstation_id' => microstation_id }
         each_pair do |name, value|
           result[name] = value
         end
@@ -75,12 +70,11 @@ module Microstation
       end
 
       def to_h
-        result = {'tagset_name'=> tagset.name, 'microstation_id' => microstation_id,
-                  'microstation_model' => microstation_model, }
+        result = { 'tagset_name' => tagset.name, 'microstation_id' => microstation_id,
+                   'microstation_model' => microstation_model }
         result['attributes'] = attribute_hash
         result
       end
-
 
       def pair(el)
         [el.name, el.value]
@@ -89,21 +83,19 @@ module Microstation
       def select
         result = []
         each do |el|
-          k,v = pair(el)
-          save = yield k,v
+          k, v = pair(el)
+          save = yield k, v
           result << find_attribute(k) if save
         end
-        self.class.new(tagset,result)
+        self.class.new(tagset, result)
       end
 
       def find(&block)
         select(&block).first
       end
 
-      def each
-        @elements.each do |el|
-          yield el
-        end
+      def each(&block)
+        @elements.each(&block)
       end
 
       def each_pair
@@ -113,34 +105,32 @@ module Microstation
       end
 
       def map_v
-        each_pair do |k,v|
+        each_pair do |k, v|
           new_v = yield v
-          update_element(k,new_v)
+          update_element(k, new_v)
         end
       end
 
       def update(value_hash)
-        value_hash = value_hash.transform{|k,v| [k.to_s,v.to_s] }
+        value_hash = value_hash.transform { |k, v| [k.to_s, v.to_s] }
         valid_atts = attributes & value_hash.keys
         valid_atts.each do |att|
-          update_element(att,value_hash[att])
+          update_element(att, value_hash[att])
         end
       end
 
-      def method_missing(meth,*args,&block)
-        base = meth.to_s.sub("=", "")
+      def method_missing(meth, *args, &block)
+        base = meth.to_s.sub('=', '')
         if attributes.include?(base)
-          if meth.match /(=)/
-            update_element(base,*args)
+          if meth.match(/(=)/)
+            update_element(base, *args)
           else
             element_value(base.to_s)
           end
         else
-          super(meth,*args,&block)
+          super(meth, *args, &block)
         end
       end
-
     end
-
   end
 end

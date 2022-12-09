@@ -1,21 +1,18 @@
 require 'microstation/property_handler'
 
 class WIN32OLE
-
   def to_ole
     self
   end
-
-end
-module Microstation
 end
 
 module Microstation
+end
 
+module Microstation
   module ElementTrait
-
     #
-    # 
+    #
     #
     # @return [Boolean] true if ole type is Text
     #
@@ -25,7 +22,7 @@ module Microstation
 
     # @return [Boolean] true if ole type is TextNode
     def text_node?
-      ole_obj.Type  == ::Microstation::MSD::MsdElementTypeTextNode
+      ole_obj.Type == ::Microstation::MSD::MsdElementTypeTextNode
     end
 
     def has_tags?
@@ -49,9 +46,10 @@ module Microstation
       text? || text_node?
     end
 
-    def microstation_id()
+    def microstation_id
       id = ole_obj.Id || ole_obj.ID64
       return nil unless id
+
       id_from_record(id)
     end
 
@@ -67,18 +65,16 @@ module Microstation
     def parent
       parent_id = ole_obj.ParentID
       return nil unless parent_id
+
       id = id_from_record(parent_id)
       app.active_design_file.find_by_id(id)
     end
 
     def id_from_record(id)
-      if id.class == WIN32OLE_RECORD
-        if id.Low > id.High
-          return id.Low
-        else
-          return id.High
-        end
-      end
+      return unless id.instance_of?(WIN32OLE_RECORD)
+      return id.Low if id.Low > id.High
+
+      id.High
     end
 
     def select
@@ -93,55 +89,52 @@ module Microstation
       ole_obj.Type
     end
 
-
     def model
       Model.new(app, app.current_drawing, ole_obj.ModelReference)
     end
-
   end
 
   class Element
-
     include ElementTrait
 
-    def self.convert_item(ole,app, cell=nil)
-      return Point3d.from_ole(ole) if ole.class == WIN32OLE_RECORD && ole.typename == 'Point3d'
-      return ole unless ole.class == WIN32OLE
+    def self.convert_item(ole, app, cell = nil)
+      return Point3d.from_ole(ole) if ole.instance_of?(WIN32OLE_RECORD) && ole.typename == 'Point3d'
+      return ole unless ole.instance_of?(WIN32OLE)
+
       case ole.Type
       when ::Microstation::MSD::MsdElementTypeText
-        ::Microstation::Text.new(ole,app,cell)
+        ::Microstation::Text.new(ole, app, cell)
       when ::Microstation::MSD::MsdElementTypeLine
-        ::Microstation::Line.new(ole,app,cell)
+        ::Microstation::Line.new(ole, app, cell)
       when ::Microstation::MSD::MsdElementTypeTextNode
-        ::Microstation::TextNode.new(ole,app,cell)
+        ::Microstation::TextNode.new(ole, app, cell)
       when ::Microstation::MSD::MsdElementTypeTag
-        ::Microstation::Tag.new(ole,app,cell)
+        ::Microstation::Tag.new(ole, app, cell)
       when ::Microstation::MSD::MsdElementTypeCellHeader
-        ::Microstation::Cell.new(ole,app,cell)
+        ::Microstation::Cell.new(ole, app, cell)
       when ::Microstation::MSD::MsdElementTypeSharedCell
-        ::Microstation::Cell.new(ole,app,cell)
+        ::Microstation::Cell.new(ole, app, cell)
       when ::Microstation::MSD::MsdElementTypeArc
-        ::Microstation::Arc.new(ole,app,cell)
+        ::Microstation::Arc.new(ole, app, cell)
       when ::Microstation::MSD::MsdElementTypeEllipse
-        ::Microstation::Ellipse.new(ole,app,cell)
+        ::Microstation::Ellipse.new(ole, app, cell)
       when ::Microstation::MSD::MsdElementTypeBsplineSurface
-        ::Microstation::BSplineSurface.new(ole,app,cell)
+        ::Microstation::BSplineSurface.new(ole, app, cell)
       when ::Microstation::MSD::MsdElementTypeBsplineCurve
-        ::Microstation::BSplineCurve.new(ole,app,cell)
+        ::Microstation::BSplineCurve.new(ole, app, cell)
 
       else
-        new(ole,app,cell)
+        new(ole, app, cell)
       end
     end
 
     def self.ole_object?
-      ole.class == WIN32OLE
+      ole.instance_of?(WIN32OLE)
     end
-
 
     attr_reader :ole_obj, :app, :original
 
-    def initialize(ole,app, cell = nil)
+    def initialize(ole, app, cell = nil)
       @ole_obj = ole
       @original = read_ole(ole)
       @app = app
@@ -152,23 +145,18 @@ module Microstation
       !!@cell
     end
 
-    def read_ole(ole)
+    def read_ole(ole); end
 
-    end
+    def write_ole(value); end
 
-    def write_ole(value)
-
-    end
-
-    def method_missing(meth,*args,&block)
+    def method_missing(meth, *args, &block)
       if meth.to_s =~ /^[A-Z]/
-        result = ole_obj.send(meth,*args,&block)
-        Element.convert_item(result,app)
+        result = ole_obj.send(meth, *args, &block)
+        Element.convert_item(result, app)
       else
-        super(meth,*args,&block)
+        super(meth, *args, &block)
       end
     end
-
 
     def get_property_handler
       ph_ole = app_ole_obj.CreatePropertyHandler(ole_obj)
@@ -183,16 +171,15 @@ module Microstation
       property_handler[name]
     end
 
-
     def do_update(value)
       return false if value == original
+
       saved_original = original
       begin
         write_ole(value)
         @original = read_ole(ole_obj)
-        return true
-
-      rescue => e
+        true
+      rescue StandardError => e
         @original = saved_original
         false
       end
@@ -231,64 +218,62 @@ module Microstation
       ole.IsCellElement || ole.IsSharedCellElement
     end
 
-    def each_cell(ole,&block)
+    def each_cell(ole, &block)
       cell = ole if ole_cell(ole)
-      ole.ResetElementEnumeration rescue binding.pry
+      begin
+        ole.ResetElementEnumeration
+      rescue StandardError
+        binding.pry
+      end
       while ole.MoveToNextElement
         component = ole.CopyCurrentElement
         if component.IsTextNodeElement
-          yield Microstation::Wrap.wrap(component.AsTextNodeElement,app,cell)
+          yield Microstation::Wrap.wrap(component.AsTextNodeElement, app, cell)
         elsif component.IsTextElement
-          yield  Microstation::Wrap.wrap(component.AsTextElement,app,cell)
+          yield Microstation::Wrap.wrap(component.AsTextElement, app, cell)
         elsif component.IsComplexElement
           each(component)
         else
-          yield  Microstation::Wrap.wrap(component,app,cell)
+          yield Microstation::Wrap.wrap(component, app, cell)
         end
       end
     end
 
-    def each(ole = ole_obj,&block)
+    def each(ole = ole_obj, &block)
       return unless ole.IsComplexElement
       return to_enum(:each) unless block_given?
+
       if ole.IsCellElement
-        each_cell(ole,&block)
+        each_cell(ole, &block)
       else
-        each_complex(ole,&block)
+        each_complex(ole, &block)
       end
     end
 
-    def each_complex(ole,&block)
+    def each_complex(ole, &block)
       cell = nil
       components = ole.GetSubElements
       while components.MoveNext
         component = components.Current
         if component.IsTextNodeElement
-          yield Microstation::Wrap.wrap(component.AsTextNodeElement,app,cell)
+          yield Microstation::Wrap.wrap(component.AsTextNodeElement, app, cell)
         elsif component.IsTextElement
-          yield  Microstation::Wrap.wrap(component.AsTextElement,app,cell)
+          yield Microstation::Wrap.wrap(component.AsTextElement, app, cell)
         elsif component.IsComplexElement
-          each(component,&block)
+          each(component, &block)
         else
-          yield  Microstation::Wrap.wrap(component,app,cell)
+          yield Microstation::Wrap.wrap(component, app, cell)
         end
       end
     end
-
   end
-
 
   class App
-
     def ole_to_ruby(ole)
-      Element.convert_item(ole,self)
+      Element.convert_item(ole, self)
     end
-
   end
-
 end
-
-
 
 module Microstation
   class Arc < Element

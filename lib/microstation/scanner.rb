@@ -1,8 +1,5 @@
 module Microstation
-
-
   class Scanner
-
     attr_reader :app
 
     def initialize(app)
@@ -12,13 +9,6 @@ module Microstation
 
     private
 
-    def ole_obj
-      @ole_obj
-    end
-    
-    
-
+    attr_reader :ole_obj
   end
-
-
 end

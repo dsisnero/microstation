@@ -1,13 +1,11 @@
 module Microstation
-
   module Scan
-
     module LineStyle
-
       def linestyles
-        @app.active_design_file.LineStyles rescue []
+        @app.active_design_file.LineStyles
+      rescue StandardError
+        []
       end
-      
 
       def linestyle_inclusions
         @linestyle_inclusions ||= []
@@ -28,18 +26,12 @@ module Microstation
 
       def resolve_linestyle_scans
         return unless linestyle_inclusions.size > 0
+
         reset_ole_linestyles
         linestyle_inclusions.each do |linestyle|
           ole_obj.IncludeLineStyle(linestyle)
         end
       end
-
     end
-
   end
-
 end
-
-      
-
-      

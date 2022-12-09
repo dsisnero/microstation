@@ -8,23 +8,16 @@ require_relative 'subtype'
 require_relative 'range'
 
 module Microstation
-
   class App
-
     def create_ole_scan_criteria
-      ole_obj.CreateObjectInMicroStation("MicroStationDGN.ElementScanCriteria")
+      ole_obj.CreateObjectInMicroStation('MicroStationDGN.ElementScanCriteria')
     end
-
   end
-
 end
 
 module Microstation
-
   module Scan
-
     class Criteria
-
       include Scan::Klass
       include Scan::Type
       include Scan::Level
@@ -34,24 +27,22 @@ module Microstation
       include Scan::Subtype
       include Scan::Range
 
-      attr_reader :app
+      attr_reader :app, :ole_obj
 
-      def self.create_scanner(name=nil, app,&block)
-        sc = create(name,app)
+      def self.create_scanner(name = nil, app, &block)
+        sc = create(name, app)
         return sc unless block
+
         block.arity < 1 ? sc.instance_eval(&block) : block.call(sc)
         sc
       end
 
-      def self.create(name=nil,app)
+      def self.create(name = nil, app)
         sc = new(app)
-        if name.nil?
-          name = "anon#{app.scanners.size + 1}"
-        end
+        name = "anon#{app.scanners.size + 1}" if name.nil?
         app.scanners[name] = sc
         sc
       end
-
 
       def initialize(app)
         @app = app
@@ -74,16 +65,9 @@ module Microstation
         @ole_obj = nil
       end
 
-      def ole_obj
-        @ole_obj
+      def method_missing(method, *args)
+        @ole_obj.send(method, *args)
       end
-
-      def method_missing(method,*args)
-        @ole_obj.send(method,*args)
-      end
-
-
     end
   end
-
 end

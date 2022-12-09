@@ -1,7 +1,5 @@
 module Microstation
-
   class TemplateRunner
-
     attr_reader :file, :template_hash
 
     def initialize(file)
@@ -11,14 +9,12 @@ module Microstation
     end
 
     def load(file)
-      begin
-        File.open(file) do |f|
-          YAML.load(f)
-        end
-      rescue => e
-        binding.pry
-        puts "Could not parse YAML: #{e.message}"
+      File.open(file) do |f|
+        YAML.load(f)
       end
+    rescue StandardError => e
+      binding.pry
+      puts "Could not parse YAML: #{e.message}"
     end
 
     def name
@@ -41,25 +37,21 @@ module Microstation
       template_hash[:template]
     end
 
-    def run_with_app(app,options = {})
-      run_options = { app: app}.merge(options)
+    def run_with_app(app, options = {})
+      run_options = { app: app }.merge(options)
       run(run_options)
     end
 
     def run(options = {})
-      begin
       the_template = Template.new(template)
       template_options = { output_dir: output_dir,
-        locals: locals,
-        name: name,
-        tagsets: tagsets
-                         }
+                           locals: locals,
+                           name: name,
+                           tagsets: tagsets }
       run_options = template_options.merge(options)
       the_template.render(run_options)
-      rescue
-        binding.pry
-      end
+    rescue StandardError
+      binding.pry
     end
-
   end
 end

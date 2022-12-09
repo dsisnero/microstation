@@ -30,9 +30,6 @@ module Microstation
     Text: 17,
   }
 
-
-
-
 end
 
 msdElementTypeCellLibraryHeader 1 (&H1)

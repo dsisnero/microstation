@@ -1,7 +1,5 @@
 module Microstation
-
   class Cell < Element
-
     def initialize(*args)
       super(*args)
       @should_replace = false
@@ -16,18 +14,15 @@ module Microstation
       ole_obj.Name
     end
 
-
     def text_elements
       return to_enum(:text_elements) unless block_given?
+
       each do |el|
         yield el if el.textual?
       end
     end
-
   end
-
 end
-
 
 #   def each
 #     return enum_for(:each) unless block_given?
@@ -36,10 +31,9 @@ end
 #       item = ole_enum.Currentq
 #       wrapped = Microstation::Wrap.wrap(item,app)
 
-#       yield 
+#       yield
 #     end
 #   end
-
 
 #   def each_ole(ole)
 #     ole_enum = ole.GetSubElements
@@ -49,13 +43,11 @@ end
 #         each_ole(item)
 #       else
 
-
 #       wrapped = Microstation::Wrap.wrap(item,app)
 
-#       yield 
-#     end 
+#       yield
+#     end
 # end
-
 
 # def each_ole(ole)
 #   ole_enum = ole.GetSubElements
@@ -73,8 +65,6 @@ end
 #     this_var = this_var.ole_obj if this_var.respond_to? :ole_obj
 #     ole_obj.ReplaceCurrentElement this_var
 #   end
-
-
 
 #  Dim search_text As String
 #  Dim replace_text As String
@@ -104,7 +94,6 @@ end
 
 # Public Sub ReplaceAllTextsInModel()
 
-
 #  'USE THIS TO SET THE REPLACEMENT BY CONFIGURATION VARIABLE
 #  'search_text = ActiveWorkspace.ExpandConfigurationVariable("SEARCH_TEXT")
 #  'replace_text = ActiveWorkspace.ExpandConfigurationVariable("REPLACE_TEXT")
@@ -125,7 +114,6 @@ end
 #     End If
 #  Loop
 # End Sub
-
 
 # Option Explicit
 #     ' Searches in text strings and nested cells
@@ -148,7 +136,7 @@ end
 #     End If
 
 #     sToFind = Trim(CmdLine(0))      '1. Parameter for search text
-#     sToReplace = Trim(CmdLine(1))   '2. Parameter for new text     
+#     sToReplace = Trim(CmdLine(1))   '2. Parameter for new text
 #     ' Check if optional parameter = yes complex was given
 #     isComplex = False
 #     If UBound(CmdLine) > 1 Then
@@ -188,4 +176,4 @@ end
 #             End If
 #         End If
 #     End If
-# # End Sub 
+# # End Sub

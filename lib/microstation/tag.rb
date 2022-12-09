@@ -1,11 +1,7 @@
 require_relative 'tagged_element'
 
-
-
 module Microstation
-
   class Tag < Element
-
     # def initialize(ole)
     #   @ole_obj = ole
     #   @original = @ole_obj.Value
@@ -16,10 +12,9 @@ module Microstation
     end
 
     def write_ole(value)
-      value = value.nil? ? "" : value
+      value = value.nil? ? '' : value
       ole_obj.Value = value
     end
-
 
     def ole_value
       @ole_obj.Value
@@ -29,7 +24,6 @@ module Microstation
       @ole_obj.TagDefinitionName
     end
 
-    
     def inspect
       "#{name}: #{value} ts ->#{tagset_name}"
     end
@@ -51,13 +45,11 @@ module Microstation
     end
 
     def update_ole(value)
-      value = value.nil? ? "" : value
+      value = value.nil? ? '' : value
       @ole_obj.Value = value
     end
 
-    def base_element=(ele)
-      @base_element = ele
-    end
+    attr_writer :base_element
 
     def ole_base_element
       @ole_obj.BaseElement
@@ -65,13 +57,16 @@ module Microstation
 
     def base_element_id
       base = ole_base_element
-      id = base.Id || base.ID64 rescue nil
-      if id.class == WIN32OLE_RECORD
-        if id.Low > id.High
-          return id.Low
-        else
-          return id.High
-        end
+      id = begin
+        base.Id || base.ID64
+      rescue StandardError
+        nil
+      end
+      if id.instance_of?(WIN32OLE_RECORD)
+        return id.Low if id.Low > id.High
+
+        return id.High
+
       end
       id
     end
@@ -79,9 +74,5 @@ module Microstation
     def base_element
       @base_element ||= TaggedElement.new(ole_base_element)
     end
-
   end
-
-
-
 end

@@ -19,13 +19,15 @@ module Windows
       obj.windows_path(path)
     end
 
-    def fs_object
-      @fs_object ||= WIN32OLE.new('Scripting.FileSystemObject')
-    end
-
+    # Convert path to windows path
+    # @param path [String, Pathname] the path you want to convert
     def windows_path(path)
       path = path.to_path if path.respond_to? :to_path
       fs_object.GetAbsolutePathName(path.to_str)
+    end
+
+    def fs_object
+      @fs_object ||= WIN32OLE.new('Scripting.FileSystemObject')
     end
   end
 end
@@ -41,11 +43,9 @@ module Microstation
   class App
     include Functions
 
-
     @default_app_options = { visible: false }
 
     class << self
-
       attr_accessor :default_app_options
 
       #  include Wrap
@@ -66,7 +66,7 @@ module Microstation
       # @yield [App] the_app yields the instanciated app
       # @return [void]
       def run(options = {})
-        opts = self.default_app_options.merge(options)
+        opts = default_app_options.merge(options)
         begin
           the_app = new(**opts)
           binding.pry if the_app.nil?
@@ -86,7 +86,7 @@ module Microstation
       # (see #open_drawing)
       # @yield Drawing
       # @return [void]
-      def open_drawing(drawing, app_options: {}, options:  {}, &block)
+      def open_drawing(drawing, app_options: {}, options: {}, &block)
         run(**app_options) do |app|
           app.open_drawing(drawing, **options, &block)
         end
@@ -484,10 +484,10 @@ module Microstation
     # the active design file
     # @return [Drawing]
     def active_design_file
-      if active_design_file?
-        ole = ole_obj.ActiveDesignFile
-        drawing_from_ole(ole)
-      end
+      return unless active_design_file?
+
+      ole = ole_obj.ActiveDesignFile
+      drawing_from_ole(ole)
     end
 
     alias active_drawing active_design_file
@@ -535,7 +535,7 @@ module Microstation
     end
 
     def tags_criteria
-      sc = scanners[:tags] || create_scanner(:tags) { include_tags }
+      scanners[:tags] || create_scanner(:tags) { include_tags }
     end
 
     def create_scan_criteria(name = nil, &block)
@@ -697,7 +697,7 @@ module Microstation
       ole_origin = to_ole_point3d(origin)
       ole_rotation = to_ole_matrix3d(rotation)
       temp ||= WIN32OLE_VARIANT::Nothing
-      ole = ole_obj.CreateTextNodeElement1(temp, ole_origin, ole_rotation)
+      ole_obj.CreateTextNodeElement1(temp, ole_origin, ole_rotation)
     rescue Exception => e
       puts e.message
       nil
@@ -739,7 +739,8 @@ module Microstation
 
     def method_missing(meth, *args, &block)
       if meth.to_s =~ /^[A-Z]/
-        require 'pry'; binding.pry
+        require 'pry'
+        binding.pry
         result = ole_obj.send(meth, *args, &block)
       else
         super(meth, *args, &block)

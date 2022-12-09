@@ -1,18 +1,11 @@
 module Microstation
-
   class TaggedElement
-
     class Set
+      attr_reader :element, :name
 
-      attr_reader :element
-
-      def initialize(name,element)
+      def initialize(name, element)
         @name = name
         @element = element
-      end
-
-      def name
-        @name
       end
 
       def elements=(elements)
@@ -23,7 +16,7 @@ module Microstation
       end
 
       def find_attribute(name)
-        @elements.find{|a| a.name == name.to_s}
+        @elements.find { |a| a.name == name.to_s }
       end
 
       def [](name)
@@ -31,10 +24,10 @@ module Microstation
       end
 
       def attributes
-        @elements.map{|e| e.name}
+        @elements.map { |e| e.name }
       end
 
-      def update_element(name,value)
+      def update_element(name, value)
         find_attribute(name)._update(value)
       end
 
@@ -45,14 +38,14 @@ module Microstation
       def to_hash
         result = {}
         @elements.each do |ele|
-          result[ele.name] = ele.value unless (ele.value == "" || ele.value.nil?)
+          result[ele.name] = ele.value unless ele.value == '' || ele.value.nil?
         end
         result
       end
 
       def stringify_keys(hash)
         result = {}
-        hash.each do |key,value|
+        hash.each do |key, value|
           result[key.to_s] = value
         end
         result
@@ -62,44 +55,39 @@ module Microstation
         value_hash = stringify_keys(value_hash)
         valid_atts = attributes & value_hash.keys
         valid_atts.each do |att|
-          update_element(att,value_hash[att])
+          update_element(att, value_hash[att])
         end
       end
 
-      def method_missing(meth,*args,&block)
+      def method_missing(meth, *args, &block)
         # binding.pry
-        base = meth.to_s.sub("=", "")
+        base = meth.to_s.sub('=', '')
         if attributes.include?(base)
-          if meth.match /(=)/
-            update_element(base,*args)
+          if meth.match(/(=)/)
+            update_element(base, *args)
           else
             element_value(base.to_s)
           end
         else
-          super(meth,*args,&block)
+          super(meth, *args, &block)
         end
       end
-
     end
 
-    def initialize(ole=nil)
+    def initialize(ole = nil)
       @ole_obj = ole
       @tag_sets = []
     end
 
-    def add_tagset(name,elements)
-      ts = TaggedElement::Set.new(name,self)
+    def add_tagset(name, elements)
+      ts = TaggedElement::Set.new(name, self)
       ts.elements = elements
       @tag_sets << ts
       ts
     end
 
     def get_tagset(name)
-      @tagsets.find{|ts| ts.name == name}
+      @tagsets.find { |ts| ts.name == name }
     end
-
-
   end
-
-
 end

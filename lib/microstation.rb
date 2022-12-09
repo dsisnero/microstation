@@ -152,19 +152,19 @@ module Microstation
     end
 
     def scan_text(file,&block)
-      ::App.open_drawing(file) do |d|
+      App.open_drawing(file) do |d|
         d.scan_text(&block)
       end
     end
 
     def get_text(file, &block)
-      ::App.open_drawing(file) do |d|
+      App.open_drawing(file) do |d|
          d.get_text(&block)
       end
     end
 
     def get_all_text(file)
-      ::App.open_drawing(file) do |d|
+      App.open_drawing(file) do |d|
         d.get_all_text
       end
     end
@@ -195,7 +195,7 @@ module Microstation
     end
  
     def run(options={}, &block)
-      App.run(...)
+      App.run(options, &block)
     end
 
   end

@@ -23,6 +23,7 @@ module Microstation
 
     def render(name: nil, output_dir: nil, locals: EMPTY_HASH, tagsets: EMPTY_ARRAY)
       return if locals == EMPTY_HASH && tagsets == EMPTY_ARRAY
+
       @changer.run(name: name, output_dir: output_dir) do |drawing|
         locals = normalize_hash(locals)
         update_text(drawing, locals)
@@ -65,10 +66,10 @@ module Microstation
       update_hash = normalize_hash(locals)
       compiled = ::Liquid::Template.parse(text.to_s)
       new_text = begin
-                   compiled.render(update_hash)
-                 rescue StandardError
-                   text
-                 end
+        compiled.render(update_hash)
+      rescue StandardError
+        text
+      end
     end
 
     def normalize_hash(scope)

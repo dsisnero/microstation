@@ -1,25 +1,17 @@
 module Microstation
-
-
   module InputType
-
-    Command = 1
-    Reset = 2
-    DataPoint = 3
-    Keyin = 4
-    Any = 5
-    Unassigned = 6
-
+    COMMAND = 1
+    DATA_POINT = 3
+    KEYIN = 4
+    ANY = 5
+    UNASSIGNED = 6
   end
 
-
   class OLE_CadInputMessage
+    include WIN32OLE::VARIANT
+    attr_reader :lastargs, :ole_obj, :app
 
-     include WIN32OLE::VARIANT
-    attr_reader :lastargs,:ole_obj, :app
-
-
-    def initialize(ole,app)
+    def initialize(ole, app)
       @ole_obj = ole
       @app = app
     end
@@ -29,23 +21,23 @@ module Microstation
     end
 
     def command?
-      input_type == InputType::Command
+      input_type == InputType::COMMAND
     end
 
     def data_point?
-      input_type == InputType::DataPoint
+      input_type == InputType::DATA_POINT
     end
 
     def key_in?
-      input_type == InputType::Keyin
+      input_type == InputType::KEYIN
     end
 
     def any?
-      input_type == InputType::Any
+      input_type == InputType::ANY
     end
 
     def unassigned?
-      input_type == InputType::Unassigned
+      input_type == InputType::UNASSIGNED
     end
 
     def input_type

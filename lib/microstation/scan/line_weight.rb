@@ -1,9 +1,6 @@
 module Microstation
-
   module Scan
-
     module LineWeight
-
       def lineweight_inclusions
         @lineweight_inclusions ||= []
       end
@@ -23,6 +20,7 @@ module Microstation
 
       def resolve_lineweight_scans
         return unless lineweight_inclusions.size > 0
+
         reset_ole_lineweights
         lineweight_inclusions.each do |lineweight|
           ole_obj.IncludeLineWeight(lineweight)

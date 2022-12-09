@@ -1,14 +1,11 @@
 module Microstation
-
   class EventHandler
     def initialize
       @handlers = {}
     end
 
     def add_handler(event, &block)
-      if block_given?
-        @handlers[event] = block
-      end
+      @handlers[event] = block if block_given?
     end
 
     def get_handler(event)
@@ -24,5 +21,4 @@ module Microstation
       end
     end
   end
-
 end

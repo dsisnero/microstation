@@ -1,14 +1,10 @@
 module Microstation
-
   class TextNode < Element
-
     attr_reader :original, :ole_obj
-
 
     def to_regexp
       Regexp.new(original.to_s)
     end
-
 
     def empty?
       ole_obj.TextLinesCount == 0
@@ -21,7 +17,6 @@ module Microstation
     def size
       ole_obj.TextLinesCount
     end
-
 
     def read_ole(ole)
       count = ole.TextLinesCount
@@ -54,17 +49,15 @@ module Microstation
     end
 
     def write_ole_in_cell(text)
-      begin
-        orig_ole = ole_obj
-        new_text_ole = ole_obj.Clone
-        new_text_ole.DeleteAllTextLines
-        text.each_line do |line|
-          new_text_ole.AddTextLine(line)
-        end
-        @ole_obj = new_text_ole
-      rescue => e
-        @ole_obj = orig_ole
+      orig_ole = ole_obj
+      new_text_ole = ole_obj.Clone
+      new_text_ole.DeleteAllTextLines
+      text.each_line do |line|
+        new_text_ole.AddTextLine(line)
       end
+      @ole_obj = new_text_ole
+    rescue StandardError => e
+      @ole_obj = orig_ole
     end
 
     def update_ole!(text)
@@ -81,32 +74,32 @@ module Microstation
     end
 
     def =~(reg)
-      @original =~ reg 
+      @original =~ reg
     end
 
     def template?
       !!(@original =~ /{{.+}}/)
     end
 
-    def render(h={})
-      return self unless  template?
-      template = Liquid::Template.parse(self.to_s)
+    def render(h = {})
+      return self unless template?
+
+      template = Liquid::Template.parse(to_s)
       result = template.render(h)
       update(result) unless result == @original
       self
     end
 
-    def method_missing(meth,*args,&block)
+    def method_missing(meth, *args, &block)
       if meth =~ /^[A-Z]/
-        ole_obj.send(meth,*args)
+        ole_obj.send(meth, *args)
       else
         copy = @original.dup
-        result = copy.send(meth,*args,&block)
+        result = copy.send(meth, *args, &block)
         update(result) unless copy == @original
         result
       end
     end
-
 
     # def method_missing2(meth,*args,&block)
     #   if meth.to_s =~ /^[A-Z]/
@@ -118,7 +111,5 @@ module Microstation
     #     result
     #   end
     # end
-
   end
-
 end

@@ -1,33 +1,27 @@
 module Microstation
-
   class TemplateInfo
-
     class TagSetMap
-
-      def initialize(filter,block)
+      def initialize(filter, block)
         @filter = filter
         @block = block
       end
 
       def call(tagsets)
         instances = tagsets.select(&filter)
-        instances.map{ |ti| block.call(ti)}
+        instances.map { |ti| block.call(ti) }
       end
     end
 
+    LIQUID_REGEXP = /{{([^}}]+)}}/
 
-
-    LIQUID_REGEXP =  /{{([^}}]+)}}/
-
-
-    attr_reader :drawing,:placeholder_keys, :template, :tagsets,:locals,:drawing_path, :tagset_filter,:tagset_map
+    attr_reader :drawing, :placeholder_keys, :template, :tagsets, :locals, :drawing_path, :tagset_filter, :tagset_map
 
     def initialize(drawing, tagset_filter: nil, tagset_map: faa_map, visible: false)
       case drawing
       when ::Microstation::Drawing
         initialize_attributes(drawing)
         return
-      when String,Pathname
+      when String, Pathname
         drawing_path = drawing
       else
         drawing_path = drawing.to_path
@@ -40,7 +34,7 @@ module Microstation
       end
       @tagset_filter = tagset_filter
       @tagset_map = tagset_map
-      return self
+      self
     end
 
     def initialize_attributes(drawing)
@@ -54,7 +48,7 @@ module Microstation
     end
 
     def drawing_tagsets(drawing)
-      #drawing.tagsets_in_drawing_to_hash
+      # drawing.tagsets_in_drawing_to_hash
       drawing.tagsets_in_drawing_to_hash
     end
 
@@ -63,36 +57,35 @@ module Microstation
     end
 
     def to_h
-      if tagset_filter
-        filtered = tagsets.select{|ts| tagset_filter.call(ts)}
-      else
-        filtered = tagsets.dup
-      end
-      mapped_tsets = filtered.map{|ts| tagset_map.call(ts)}
+      filtered = if tagset_filter
+                   tagsets.select { |ts| tagset_filter.call(ts) }
+                 else
+                   tagsets.dup
+                 end
+      mapped_tsets = filtered.map { |ts| tagset_map.call(ts) }
       { template: template,
         output_dir: output_dir,
         name: drawing_name,
         locals: locals,
-        tagsets: mapped_tsets
-      }
+        tagsets: mapped_tsets }
     end
 
     def default_filter
-      ->(ts){ ts.name == 'faatitle'}
+      ->(ts) { ts.name == 'faatitle' }
     end
 
     def before_locals(locals)
       locals
     end
 
-    def map_tagset(mapname: , filter: tagset_name_filter, &block)
+    def map_tagset(mapname:, filter: tagset_name_filter, &block)
       @tagset_mappings[tname] = TagSetMap.new(filter, block)
     end
 
     def do_tagset_mappings
       @tagset_mappings.each do |ts_mapper|
         ts_mapper.call(tagsets)
-        ti_instances = tagsets.select{|ts| ts['tag_name'] == k}
+        ti_instances = tagsets.select { |ts| ts['tag_name'] == k }
         ti_instances.each do |ti|
           ti.attributes.map
         end
@@ -100,11 +93,11 @@ module Microstation
     end
 
     def faa_map
-      ->(ts){
+      lambda { |ts|
         if ts['tagset_name'] == 'faatitle'
           atts = ts['attributes']
-          new_atts = atts.keep_if{|k,v| faa_title_keys.include? k}
-          ts['attributes']= new_atts
+          new_atts = atts.keep_if { |k, _v| faa_title_keys.include? k }
+          ts['attributes'] = new_atts
           ts
         else
           ts
@@ -113,9 +106,8 @@ module Microstation
     end
 
     def faa_title_keys
-      %w(microstation_id fac title1 title2 title3 subnam subttle appname appttl file dnnew jcnno city state)
+      %w[microstation_id fac title1 title2 title3 subnam subttle appname appttl file dnnew jcnno city state]
     end
-
 
     def drawing_name
       drawing_path.basename.to_s
@@ -127,7 +119,7 @@ module Microstation
 
     def dump(dir = output_dir)
       dir = Pathname(dir)
-      File.open(dir + yaml_filename, 'w'){|f| f.puts self.to_yaml}
+      File.open(dir + yaml_filename, 'w') { |f| f.puts to_yaml }
     end
 
     def to_yaml
@@ -136,37 +128,34 @@ module Microstation
 
     protected
 
-    def entry_points(drawing)
+    def entry_points(_drawing)
       @entry_points ||= get_entry_points
     end
 
     def get_entry_points(drawing)
       result = []
-      drawing.scan_all_text  do |m,text|
-        binding.pry if text =~ /txt1/ 
+      drawing.scan_all_text do |m, text|
+        binding.pry if text =~ /txt1/
 
-        result << [m, text.to_s] if text.to_s  =~ /{{([^}}])+}}/
+        result << [m, text.to_s] if text.to_s =~ /{{([^}}])+}}/
       end
       binding.pry
       result
     end
 
-    def keys_from_entry_points(entry_points= get_entry_points)
-      entry_points.reduce([]) do |result,(m,text)|
-        text.scan(LIQUID_REGEXP).flatten.map{|t| t.strip}.each do |a|
+    def keys_from_entry_points(entry_points = get_entry_points)
+      entry_points.reduce([]) do |result, (_m, text)|
+        text.scan(LIQUID_REGEXP).flatten.map { |t| t.strip }.each do |a|
           result << a
         end
         result.uniq
       end
     end
 
-    def keys_to_h(keys= @placeholder_keys)
-      keys.each_with_object({}) do |k,h|
-        h[k] = ""
+    def keys_to_h(keys = @placeholder_keys)
+      keys.each_with_object({}) do |k, h|
+        h[k] = ''
       end
     end
-
-
   end
-
 end
