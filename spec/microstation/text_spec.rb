@@ -1,19 +1,21 @@
 # frozen_string_literal: true
 
-require_relative '../spec_helper'
+require_relative "../spec_helper"
 
-describe 'Microstation:Text and Microstation::TextNode' do
+describe "Microstation:Text and Microstation::TextNode" do
   include Minitest::Hooks
   before(:all) do
     @app = Microstation::App.new
     config_app(@app)
   end
   after(:all) do
-    @app.quit rescue nil
+    @app.quit
+  rescue
+    nil
   end
 
-  describe 'given a text node initialized by a scan' do
-    let(:drawing) { open_existing_drawing('drawing_with_text.dgn') }
+  describe "given a text node initialized by a scan" do
+    let(:drawing) { open_existing_drawing("drawing_with_text.dgn") }
     let(:criteria) { @app.create_scanner(&:include_textual) }
 
     before do
@@ -23,15 +25,15 @@ describe 'Microstation:Text and Microstation::TextNode' do
 
     let(:text) { @text }
 
-    it 'should be an instance of text' do
+    it "should be an instance of text" do
       _(text).must_be_instance_of Microstation::Text
     end
 
-    it 'should forward all the Microstation commands to ole_obj' do
+    it "should forward all the Microstation commands to ole_obj" do
       _(text.IsTextElement).must_equal true
     end
 
-    it 'should update the drawing if the text is changed' do
+    it "should update the drawing if the text is changed" do
       id = text.microstation_id
       val = text.to_s
       text.reverse!

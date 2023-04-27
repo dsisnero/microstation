@@ -3,7 +3,7 @@ module Microstation
     module LineStyle
       def linestyles
         @app.active_design_file.LineStyles
-      rescue StandardError
+      rescue
         []
       end
 

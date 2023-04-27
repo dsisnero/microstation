@@ -8,7 +8,7 @@ module Microstation
     end
 
     def drawing_dgn?(f)
-      File.file?(f) && File.extname(f) == '.dgn'
+      File.file?(f) && File.extname(f) == ".dgn"
     end
 
     def drawing?(f)
@@ -19,15 +19,15 @@ module Microstation
     end
 
     def drawing_type?(f)
-      File.file?(f) && (File.extname(f) == '.dgn' || File.extname(f) == '.dwg')
+      File.file?(f) && (File.extname(f) == ".dgn" || File.extname(f) == ".dwg")
     end
 
     def check_is_drawing(f)
-      raise ArgumentError, 'File must be a dgn or dwg file' unless drawing?(f)
+      raise ArgumentError, "File must be a dgn or dwg file" unless drawing?(f)
     end
 
     def check_is_dgn(f)
-      raise ArgumentError, 'File must be a dgn file' unless microstation_drawing?(f)
+      raise ArgumentError, "File must be a dgn file" unless microstation_drawing?(f)
     end
   end
 end

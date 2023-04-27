@@ -1,4 +1,4 @@
-require_relative 'wrap'
+require_relative "wrap"
 
 module Microstation
   class Enumerator

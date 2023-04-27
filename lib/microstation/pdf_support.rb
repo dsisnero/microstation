@@ -3,7 +3,7 @@ module Microstation
     def pdf_name(output_dir = nil)
       name = basename
       dir = output_dir || dirname
-      pdfname = Pathname(name).ext('pdf')
+      pdfname = Pathname(name).ext("pdf")
       (dir + pdfname).expand_path
     end
 

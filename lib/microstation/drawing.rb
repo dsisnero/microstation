@@ -1,9 +1,9 @@
-require_relative 'properties'
-require_relative 'tag_set_trait'
-require_relative 'model'
-require_relative 'errors'
-require_relative 'scan_trait'
-require 'liquid'
+require_relative "properties"
+require_relative "tag_set_trait"
+require_relative "model"
+require_relative "errors"
+require_relative "scan_trait"
+require "liquid"
 # /
 # // MessageId: DISP_E_PARAMNOTFOUND
 # //
@@ -30,7 +30,7 @@ module Microstation
       @app = app
       @ole_obj = ole
       @find_tagset_instances_called = false
-      @app.register_handler('ISaveAsEvents_AfterSaveAs') do |*_args|
+      @app.register_handler("ISaveAsEvents_AfterSaveAs") do |*_args|
         @drawing_saved = true
       end
     end
@@ -102,8 +102,8 @@ module Microstation
       begin
         ole_obj.SaveAs(wpath, overwrite, format)
         wait_save_event(10)
-        raise 'drawing not saved in 10 seconds' unless @drawing_saved
-      rescue StandardError => e
+        raise "drawing not saved in 10 seconds" unless @drawing_saved
+      rescue => e
         binding.pry
       end
     end
@@ -141,13 +141,13 @@ module Microstation
     # calls scal_all_with_hash
     def scan_all(criteria)
       return to_enum(__callee__, criteria) unless block_given?
-
+      result = [] if block_given?
       each_model do |m|
         m.scan_model(criteria) do |r|
           if block_given?
-            yield r
+            yield m, r
           else
-            result << r
+            result << [m, r]
           end
         end
       end
@@ -155,7 +155,7 @@ module Microstation
 
     def get_text
       result = []
-      scan_text do |te|
+      scan_text do |_model, te|
         if block_given?
           yield te.to_s
         else
@@ -167,25 +167,25 @@ module Microstation
 
     # scan all text and text regions in all
     # models
-    # @yield [String] text that is found
+    # @yield [Model,String] text that is found
     def scan_text(&block)
       scan_all(text_criteria, &block)
     end
 
     # scan all tags in drawing and
-    # @yield [Tag] to the block
+    # @yield [Model,Tag] to the block
     def scan_tags(&block)
       scan_all(tags_criteria, &block)
     end
 
     # scan all cells in drawing and
-    # @yield [Cell] to the block
+    # @yield [Model,Cell] to the block
     def scan_cells(&block)
       scan_all(cells_criteria, &block)
     end
 
     def scan_text_in_cells(&block)
-      scan_cells do |c|
+      scan_cells do |_model, c|
         c.text_elements(&block)
       end
     end
@@ -213,7 +213,7 @@ module Microstation
     #  alias_method :keywords , :keywords=x
 
     def dimensions
-      eval_cexpression('tcb->ndices')
+      eval_cexpression("tcb->ndices")
     end
 
     # def fullname
@@ -263,7 +263,7 @@ module Microstation
       @drawing_closed = true
       begin
         ole_obj.Close
-      rescue StandardError
+      rescue
         nil
       end
       @ole_obj = nil
@@ -280,15 +280,15 @@ module Microstation
     # @param name [String, nil] @return a Pathname from the name or drawing name
     def pdf_name(name = nil)
       name ||= self.name
-      Pathname(name).sub_ext('.pdf')
+      Pathname(name).sub_ext(".pdf")
     end
 
     def pdf_driver
-      app.windows_path((::Microstation.plot_driver_directory + 'pdf-bw.plt').to_s)
+      app.windows_path((::Microstation.plot_driver_directory + "pdf-bw.plt").to_s)
     end
 
     def pen_table
-      app.windows_path((::Microstation.plot_driver_directory + 'wmbw.tbl'))
+      app.windows_path((::Microstation.plot_driver_directory + "wmbw.tbl"))
     end
 
     # iterate through each model in the drawing
@@ -312,7 +312,7 @@ module Microstation
     # @param [String] template - the template to use for the model
     def new_model(name, template = nil)
       template_ole = template ? template.ole_obj : app.ole_obj.ActiveDesignFile.DefaultModelReference
-      el = app.ole_obj.ActiveDesignFile.Models.Add(template_ole, name, 'Added ')
+      el = app.ole_obj.ActiveDesignFile.Models.Add(template_ole, name, "Added ")
       model_from_ole(el).activate
     end
 
@@ -329,7 +329,7 @@ module Microstation
     def find_model(name)
       ole = ole_obj.Models(name)
       model_from_ole(ole)
-    rescue StandardError
+    rescue
       puts "model #{name} not found"
       nil
     end
@@ -373,7 +373,7 @@ module Microstation
       model.activate
     end
 
-    alias activate_model change_model
+    alias_method :activate_model, :change_model
 
     #
     # Returns the model names
@@ -437,10 +437,10 @@ module Microstation
       result = []
       @find_tagset_instances_called = true
       filtered = if block_given?
-                   get_tagsets_in_drawing_hash.select(&filter)
-                 else
-                   get_tagsets_in_drawing_hash
-                 end
+        get_tagsets_in_drawing_hash.select(&filter)
+      else
+        get_tagsets_in_drawing_hash
+      end
       binding.pry
       filtered.map do |h|
         element_id = h[:base_element_id]
@@ -473,13 +473,13 @@ module Microstation
     end
 
     def save_tagsets_to_file(name)
-      require 'json'
-      ::File.open(name, 'w') { |f| f.write get_tagsets_in_drawing_hash.to_a.to_json }
+      require "json"
+      ::File.write(name, get_tagsets_in_drawing_hash.to_a.to_json)
     end
 
     # used
     def get_tagsets_in_drawing_hash(ts_name: nil, base_element_id: nil, &block)
-      return to_enum(__callee__, ts_name: ts_name, base_element_id: base_element_id) unless block_given?
+      return to_enum(__callee__, ts_name: ts_name, base_element_id: base_element_id) unless block
 
       each_model do |m|
         m.get_tagsets_in_model_hash(ts_name: ts_name, base_element_id: base_element_id, &block)
@@ -516,7 +516,7 @@ module Microstation
       tset_instances = select_tagset_instances_by_name(name)
       case tset_instances.size
       when 0
-        raise 'no tagset found'
+        raise "no tagset found"
       when 1
         ts = tset_instances.first
         ts.update(h_local)
@@ -536,12 +536,12 @@ module Microstation
     end
 
     def find_tagset_instance_from_hash(ti_array, h_local)
-      id = h_local.fetch('microstation_id', :not_found)
+      id = h_local.fetch("microstation_id", :not_found)
       if id == :not_found || id.nil?
         name = ti_array.first.name
 
         raise MultipleUpdateError,
-              "found #{ti_array.size} instances for tagset #{name}; Need a microstation_id for hash"
+          "found #{ti_array.size} instances for tagset #{name}; Need a microstation_id for hash"
       end
       ts = ti_array.find { |ti| ti.microstation_id == id }
     end
@@ -557,14 +557,14 @@ module Microstation
     end
 
     def update_error
-      raise ArgumentError, 'Argument must be an array of hashes'
+      raise ArgumentError, "Argument must be an array of hashes"
     end
 
     def update_tagsets_from_template_structure(ts_arg)
       ts_arg.each do |h|
-        inst_array = h['instances']
+        inst_array = h["instances"]
         inst_array.each do |ts_hash|
-          update_tagset(ts_hash['tagset_name'], ts_hash['attributes'])
+          update_tagset(ts_hash["tagset_name"], ts_hash["attributes"])
         end
       end
     end
@@ -578,7 +578,7 @@ module Microstation
       is_ok = true
       begin
         @ole_obj.Name
-      rescue StandardError => e
+      rescue => e
         is_ok = false
       end
 
@@ -631,12 +631,12 @@ module Microstation
     def print_pdf(windows_path)
       cad_input_queue do |q|
         q << "Print Driver #{pdf_driver}"
-        q << 'Print Papername ANSI D'
-        q << 'Print BOUNDARY FIT ALL'
-        q << 'Print ATTRIBUTES BORDER OUTLINE OFF'
-        q << 'Print Attributes Fenceboundary Off'
+        q << "Print Papername ANSI D"
+        q << "Print BOUNDARY FIT ALL"
+        q << "Print ATTRIBUTES BORDER OUTLINE OFF"
+        q << "Print Attributes Fenceboundary Off"
         q << "Print pentable attach #{pen_table}"
-        q << 'Print colormode monochrome'
+        q << "Print colormode monochrome"
         q << "Print Execute #{windows_path}"
       end
     end
@@ -651,7 +651,7 @@ module Microstation
       Model.new(app, self, ole)
     end
 
-    def copy_name(backup_str = '.copy')
+    def copy_name(backup_str = ".copy")
       lname = name.dup
       ext = File.extname(lname)
       name = "#{File.basename(lname, ext)}#{backup_str}#{ext}"
@@ -665,11 +665,11 @@ module Microstation
     end
 
     def ole_line_element_klass
-      @line_element ||= ole_classes.find { |c| c.name == '_LineElement' }
+      @line_element ||= ole_classes.find { |c| c.name == "_LineElement" }
     end
 
     def ole_element_klass
-      @element_class ||= ole_classes.find { |c| c.name == '_Element' }
+      @element_class ||= ole_classes.find { |c| c.name == "_Element" }
     end
 
     def app_ole_obj

@@ -1,16 +1,15 @@
 #!/usr/bin/env ruby
-require 'gli'
-$LOAD_PATH.unshift(File.join(__dir__, 'lib'))
+require "gli"
+$LOAD_PATH.unshift(File.join(__dir__, "lib"))
 
 begin # XXX: Remove this begin/rescue before distributing your app
-  require 'microstation'
+  require "microstation"
 rescue LoadError
-  STDERR.puts "In development, you need to use `bundle exec ruby -I lib bin/dgn_template` to run your app"
-  STDERR.puts "At install-time, RubyGems will make sure lib, etc. are in the load path"
-  STDERR.puts "Feel free to remove this message from bin/dgn_template now"
+  warn "In development, you need to use `bundle exec ruby -I lib bin/dgn_template` to run your app"
+  warn "At install-time, RubyGems will make sure lib, etc. are in the load path"
+  warn "Feel free to remove this message from bin/dgn_template now"
   exit 64
 end
-
 
 module Cli
   include GLI::App
@@ -32,44 +31,44 @@ module Cli
   # arg_name 'The name of the argument'
   # flag [:f,:flagname]
 
-  desc 'create template description files to fill out'
+  desc "create template description files to fill out"
   long_desc "
 Given a directory, this will generate yaml files describing
 the fields and tagsets of dgn files in the directory
 "
 
-  arg 'dir'
+  arg "dir"
   command :dump do |c|
     # c.desc ''
     # c.switch :s
 
-    c.desc 'file to run dump on'
+    c.desc "file to run dump on"
     #  c.default_value 'default'
-    c.flag [:f, :filename]
-    c.action do |global_options,options,args|
-
+    c.flag %i[f filename]
+    c.action do |_global_options, options, args|
       # Your command logic here
 
       # If you have any errors, just raise them
       # raise "that command made no sense"
-      if file=options[:f]
+      if file = options[:f]
         puts "file dump ran with file option #{options[:f]}"
-        
+
         Microstation.dump_template_info(file, visible: true)
       else
-        help_now!('dir is required') if args.empty?
+        help_now!("dir is required") if args.empty?
+        require "debug"
+        binding.break
         Microstation.dump_template_info_for_dir args.first
       end
     end
   end
 
-  desc 'Run the template description files'
+  desc "Run the template description files"
   arg :dir, :optional
   command :run do |c|
-
-    c.desc 'file to run'
-    c.flag [:f, :filename]
-    c.action do |global_options,options,args|
+    c.desc "file to run"
+    c.flag %i[f filename]
+    c.action do |_global_options, options, args|
       if options[:f]
         puts "Running run on file #{options[:f]}"
 
@@ -81,7 +80,7 @@ the fields and tagsets of dgn files in the directory
     end
   end
 
-  pre do |global,command,options,args|
+  pre do |_global, _command, _options, _args|
     # Pre logic here
     # Return true to proceed; false to abort and not call the
     # chosen command
@@ -90,18 +89,17 @@ the fields and tagsets of dgn files in the directory
     true
   end
 
-  post do |global,command,options,args|
+  post do |global, command, options, args|
     # Post logic here
     # Use skips_post before a command to skip this
     # block on that command only
   end
 
-  on_error do |exception|
+  on_error do |_exception|
     # Error logic here
     # return false to skip default error handling
     true
   end
 
   exit run(ARGV)
-
 end

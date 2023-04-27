@@ -32,7 +32,7 @@ module Microstation
 
     def property_names
       names = ole_obj.GetAccessStrings
-      result  = []
+      result = []
       names.each do |e|
         if block_given?
           yield e

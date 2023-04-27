@@ -1,34 +1,32 @@
-require 'microstation/version'
-require 'win32ole'
-require 'microstation/file_tests'
-require 'microstation/app'
-require 'microstation/drawing'
-require 'microstation/configuration'
-require 'microstation/ext/pathname'
-require 'microstation/cad_input_queue'
-require 'microstation/scan/criteria'
-require 'microstation/enumerator'
-require 'microstation/line'
-require 'microstation/text'
-require 'microstation/text_node'
-require 'microstation/template'
-require 'microstation/tag_set'
-require 'microstation/cell'
-require 'microstation/tag'
-require 'microstation/dir'
-require 'microstation/ext/win32ole'
-require 'microstation/template_info'
-require 'microstation/template_runner'
-require 'erb'
+require "microstation/version"
+require "win32ole"
+require "microstation/file_tests"
+require "microstation/app"
+require "microstation/drawing"
+require "microstation/configuration"
+require "microstation/ext/pathname"
+require "microstation/cad_input_queue"
+require "microstation/scan/criteria"
+require "microstation/enumerator"
+require "microstation/line"
+require "microstation/text"
+require "microstation/text_node"
+require "microstation/template"
+require "microstation/tag_set"
+require "microstation/cell"
+require "microstation/tag"
+require "microstation/dir"
+require "microstation/ext/win32ole"
+require "microstation/template_info"
+require "microstation/template_runner"
+require "erb"
 
 module Microstation
-
   ROOT = Pathname(__dir__).parent
 
-  TEMPLATES_PATH = ROOT + 'templates'
-  
-  class << self
+  TEMPLATES_PATH = ROOT + "templates"
 
+  class << self
     def save_as_pdf(d)
       run do |app|
         drawing = app.current_drawing
@@ -38,43 +36,37 @@ module Microstation
     end
 
     def default_error_proc
-      @default_error_proc ||= ->(e,f){ puts "Couldn't open drawing #{f}" }
+      @default_error_proc ||= ->(e, f) { puts "Couldn't open drawing #{f}" }
     end
 
     def default_drawing_options
       {read_only: true, error_proc: default_error_proc}
     end
 
-    def default_error_proc=(p)
-      @default_error_proc = p
-    end
+    attr_writer :default_error_proc
 
-    def default_app_options
-       @default_app_options
-    end
+    attr_reader :default_app_options
 
-    def default_app_options=(opts)
-      @default_app_options = opts 
-    end
+    attr_writer :default_app_options
 
     default_app_options = {visible: false}
 
     def root
-      ROOT 
+      ROOT
     end
 
     def plot_driver_directory
       root + "plot"
     end
 
-    def use_template(template,context, options ={} )
+    def use_template(template, context, options = {})
       def context.binding
         binding
       end
       options = {readonly: true}
       App.run do |app|
-        tmpfile = Tempfile.new('drawing')
-        app.new_drawing(tmpfile,template) do |drawing|
+        tmpfile = Tempfile.new("drawing")
+        app.new_drawing(tmpfile, template) do |drawing|
           drawing.scan_text do |text|
             compiled_template = ERB.new(text)
             new_text = compiled_template.result(context.binding)
@@ -97,34 +89,34 @@ module Microstation
     end
 
     # gets all dwg and dgn dfiles in a directory
-    # @param dir 
+    # @param dir
     def drawings_in_dir(dir)
       dirpath = Pathname.new(dir).expand_path
-      drawings = dirpath.glob("*.d{gn,wg,xf}").sort_by{ _1.basename('.*').to_s.downcase }
+      drawings = dirpath.glob("*.d{gn,wg,xf}").sort_by { _1.basename(".*").to_s.downcase }
     end
 
-    def dump_template_info_for_dir(dir, options={})
+    def dump_template_info_for_dir(dir, **options)
       drawings = drawings_in_dir(dir)
       raise "no drawings in dir #{dir}" if drawings.empty?
       with_drawings(drawings) do |drawing|
-        template = TemplateInfo.new(drawing,options)
+        template = TemplateInfo.new(drawing, **options)
         template.dump(dir)
       end
     end
 
-    def dump_template_info(dgn, dir: nil,  tagset_filter: nil, visible: false)
+    def dump_template_info(dgn, dir: nil, tagset_filter: nil, visible: false)
       drawing = Pathname(dgn).expand_path
       output_dir = dir || drawing.parent
-      template = TemplateInfo.new(drawing,tagset_filter: tagset_filter, visible: visible)
+      template = TemplateInfo.new(drawing, tagset_filter: tagset_filter, visible: visible)
       template.dump(output_dir)
     end
 
     # @param dir [String] the directory of drawing [dgn,dwg] to convert
     # @param outdir [String] the output dir for converted pdf files
-    def dgn2pdf(dir,outdir = dir)
+    def dgn2pdf(dir, outdir = dir)
       drawings = drawings_in_dir(dir)
       with_drawings(drawings) do |drawing|
-        drawing.save_as_pdf(name: drawing.name,dir: outdir)
+        drawing.save_as_pdf(name: drawing.name, dir: outdir)
       end
     end
 
@@ -141,17 +133,16 @@ module Microstation
 
     # opens all the drawings in a drawing
     # by calling open drawing
-    def with_drawings_in_dir(dir,...)
+    def with_drawings_in_dir(dir, ...)
       drawings = drawings_in_dir(dir)
-      with_drawings(drawings,...)
+      with_drawings(drawings, ...)
     end
 
-    
     def with_drawings(...)
-      App.with_drawings(...) 
+      App.with_drawings(...)
     end
 
-    def scan_text(file,&block)
+    def scan_text(file, &block)
       App.open_drawing(file) do |d|
         d.scan_text(&block)
       end
@@ -159,7 +150,7 @@ module Microstation
 
     def get_text(file, &block)
       App.open_drawing(file) do |d|
-         d.get_text(&block)
+        d.get_text(&block)
       end
     end
 
@@ -193,34 +184,28 @@ module Microstation
         drawing.close
       end
     end
- 
-    def run(options={}, &block)
+
+    def run(options = {}, &block)
       App.run(options, &block)
     end
-
   end
-
 end
 
 if $0 == __FILE__
 
-  require 'pry'
+  require "pry"
 
   app = Microstation::App.new
-  require 'microstation/ole_helper'
+  require "microstation/ole_helper"
 
-  File.open('app_methods.txt','w') do |f|
-    f.write app.ole_obj.ole_methods_detail
-  end
+  File.write("app_methods.txt", app.ole_obj.ole_methods_detail)
 
-  tlib = app.ole_obj.ole_typelib 
-  File.open('microstation_classes.txt','w') do |f|
-    f.write app.ole_obj.ole_classes_detail
-  end
+  tlib = app.ole_obj.ole_typelib
+  File.write("microstation_classes.txt", app.ole_obj.ole_classes_detail)
 
   ole_obj = app.ole_obj
 
-  event_classes = ole_obj.select_ole_type('event')
+  event_classes = ole_obj.select_ole_type("event")
   puts event_classes
 
 

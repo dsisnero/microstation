@@ -1,20 +1,20 @@
 # frozen_string_literal: true
 
-require 'pathname'
+require "pathname"
 SPEC_DIR = Pathname(__dir__).expand_path
 ROOT_DIR = SPEC_DIR.parent
-DRAWING_DIR = ROOT_DIR +  'cad_files'
-OUTPUT_DIR = ROOT_DIR + 'test_outdir'
-TEMP_DIR = ROOT_DIR + 'tmp'
+DRAWING_DIR = ROOT_DIR + "cad_files"
+OUTPUT_DIR = ROOT_DIR + "test_outdir"
+TEMP_DIR = ROOT_DIR + "tmp"
 
-require 'bundler/setup'
-$LOAD_PATH.unshift( ROOT_DIR + 'lib')
+require "bundler/setup"
+$LOAD_PATH.unshift(ROOT_DIR + "lib")
 
-require 'minitest/spec'
-require 'minitest/autorun'
-require 'minitest/hooks/default'
-require 'microstation'
-require 'pry'
+require "minitest/spec"
+require "minitest/autorun"
+require "minitest/hooks/default"
+require "microstation"
+require "pry"
 def drawing_path(file)
   (DRAWING_DIR + file).expand_path
 end
@@ -32,12 +32,12 @@ def seedfile_path(file)
 end
 
 def normalize_path(p)
-  p.to_s.sub(/[c,C]:/, 'C:')
+  p.to_s.sub(/[c,C]:/, "C:")
 end
 
 def config_app(app)
   conf = app.configuration
-  conf.prepend('MS_SEEDFILES', DRAWING_DIR)
+  conf.prepend("MS_SEEDFILES", DRAWING_DIR)
   # conf.set!('MS_DESIGNSEED','seed2d')
 end
 
@@ -48,11 +48,11 @@ def open_existing_drawing(name)
   @app.open_drawing(path)
 end
 
-def new_drawing(name, seedfile: 'seed2d' )
+def new_drawing(name, seedfile: "seed2d")
   seed_path = (drawing_path(seedfile) if seedfile)
   begin
     @app.close_active_drawing
-  rescue StandardError
+  rescue
     nil
   end
   @path = output_path(name)
@@ -71,12 +71,12 @@ def delete_current_drawing
     path = drawing.path
     begin
       @app.close_active_drawing
-    rescue StandardError
+    rescue
       nil
     end
     begin
       File.delete path
-    rescue StandardError
+    rescue
       nil
     end
   end
@@ -86,7 +86,7 @@ def before_new_drawing
   @app.close_active_drawing
   begin
     File.delete(@path)
-  rescue StandardError
+  rescue
     nil
   end
 end

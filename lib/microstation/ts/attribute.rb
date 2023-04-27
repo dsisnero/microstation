@@ -21,19 +21,19 @@ module Microstation
 
       def self.tag_type(type)
         ruby_type = if type.instance_of?(Symbol)
-                      case type
-                      when :char
-                        String
-                      when :int
-                        Integer
-                      when :float
-                        Float
-                      else
-                        :char
-                      end
-                    else
-                      type
-                    end
+          case type
+          when :char
+            String
+          when :int
+            Integer
+          when :float
+            Float
+          else
+            :char
+          end
+        else
+          type
+        end
 
         RUBY_TO_MS[ruby_type]
       end

@@ -1,15 +1,21 @@
 module PrimitiveCommandInterface
-  def Keyin(keyin); end
+  def Keyin(keyin)
+  end
 
-  def DataPoint(pt, view); end
+  def DataPoint(pt, view)
+  end
 
-  def Reset; end
+  def Reset
+  end
 
-  def Cleanup; end
+  def Cleanup
+  end
 
-  def Dynamics(pt, view, drawmode); end
+  def Dynamics(pt, view, drawmode)
+  end
 
-  def Start; end
+  def Start
+  end
 end
 
 class LineCreation
@@ -27,7 +33,7 @@ class LineCreation
     when 0
       app.ole_obj.CommandState.StartDynamics
       @points[0] = pt
-      app.show_prompt 'Place end point'
+      app.show_prompt "Place end point"
     when 1
       @points[1] = pt
       line_from_pts(@points)
@@ -48,7 +54,7 @@ class LineCreation
   end
 
   def Start
-    app.show_command 'VBA PlaceLine Example'
-    app.show_prompt 'Select start of line'
+    app.show_command "VBA PlaceLine Example"
+    app.show_prompt "Select start of line"
   end
 end

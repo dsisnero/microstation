@@ -1,15 +1,13 @@
-require_relative 'pdf_support'
-require 'fileutils'
+require_relative "pdf_support"
+require "fileutils"
 module Microstation
-
   class Dir
-
     include PdfSupport
     include FileUtils::Verbose
 
     attr_reader :dir, :relative_pdf_path
 
-    def initialize(dir,pdf_path=nil)
+    def initialize(dir, pdf_path = nil)
       @dir = Pathname(dir).expand_path
       @relative_pdf_path = set_relative_pdf_path(pdf_path)
     end
@@ -24,7 +22,7 @@ module Microstation
     end
 
     def ==(other)
-      self.dir == other.dir && self.relative_pdf_path == other.relative_pdf_path
+      dir == other.dir && relative_pdf_path == other.relative_pdf_path
     end
 
     def to_path
@@ -43,7 +41,6 @@ module Microstation
       path.exist?
     end
 
-
     def mkdir
       @dir.mkdir
     end
@@ -53,23 +50,21 @@ module Microstation
     end
 
     def +(other)
-      self.class.new( self.path + other)
+      self.class.new(path + other)
     end
 
-
-    def copy(drawing,dir)
+    def copy(drawing, dir)
       cp drawing, dir
     end
 
-    def select_by_name( re)
+    def select_by_name(re)
       re = Regexp.new(re)
-      drawing_files.select{|n| n.to_path =~ re}
+      drawing_files.select { |n| n.to_path =~ re }
     end
-
 
     def find_by_name(re)
       re = Regexp.new(re)
-      drawing_files.find{|n| n.to_path =~ re}
+      drawing_files.find { |n| n.to_path =~ re }
     end
 
     def drawings
@@ -81,13 +76,13 @@ module Microstation
     end
 
     def sort(array_of_files)
-      sort_lambda = @sort_by || lambda{|f| f.path.to_s}
+      sort_lambda = @sort_by || lambda { |f| f.path.to_s }
       array_of_files.sort_by(&sort_lambda)
     end
 
     def drawing_files
       return @drawing_files if @drawing_files
-      set_drawing_files(drawings.map{|dwg| Microstation::Drawing::File.new(dwg)} )
+      set_drawing_files(drawings.map { |dwg| Microstation::Drawing::File.new(dwg) })
       @drawing_files
     end
 
@@ -95,14 +90,12 @@ module Microstation
       @drawing_files = sort(dfiles)
     end
 
-
     def pdf_generation_complete?
-      drawing_files.all?{|d| not d.needs_pdf?}
+      drawing_files.all? { |d| !d.needs_pdf? }
     end
 
-
     def pdf_files(dir = pdf_dirname)
-      sort(drawing_files).map{|p| p.pdf_name(dir)}
+      sort(drawing_files).map { |p| p.pdf_name(dir) }
     end
 
     def concat_pdfs(files)
@@ -110,12 +103,12 @@ module Microstation
     end
 
     def drawing_files_needing_pdf(dir = pdf_dirname)
-      drawing_files.select{|d| d.needs_pdf?(dir) }
+      drawing_files.select { |d| d.needs_pdf?(dir) }
     end
 
     def print_pdfs(dir = pdf_dirname)
-      with_drawing_files( drawing_files_needing_pdf) do |drawing|
-        drawing.save_as_pdf(:dir => dir)
+      with_drawing_files(drawing_files_needing_pdf) do |drawing|
+        drawing.save_as_pdf(dir: dir)
       end
     end
 
@@ -125,33 +118,30 @@ module Microstation
     end
 
     def find_pdftk(dirs = nil)
-      require 'pdf_forms'
-      @pdftk = PdfForms.new('e:/tools/pdftk-1.44/bin/pdftk.exe')
+      require "pdf_forms"
+      @pdftk = PdfForms.new("e:/tools/pdftk-1.44/bin/pdftk.exe")
     end
 
     def pdftk
-      @pdftk ||= find_pdftk(dirs= nil)
+      @pdftk ||= find_pdftk(dirs = nil)
     end
 
-
-    def concat_pdfs(files,name)
-      pdftk.cat(files,name.to_s)
+    def concat_pdfs(files, name)
+      pdftk.cat(files, name.to_s)
       puts "generated #{name}"
     end
-
-
 
     def get_meta_for_drawings
       @drawing_files = nil
       files = []
-      with_drawing_files( drawings) do |drawing|
+      with_drawing_files(drawings) do |drawing|
         files << Microstation::Drawing::File.from_drawing(drawing)
       end
       set_drawing_files(files)
     end
 
     def with_drawing_files(dwgs = drawing_files, &block)
-      Microstation.with_drawings(dwgs,&block)
+      Microstation.with_drawings(dwgs, &block)
     end
 
     def pdf_dirname
@@ -167,22 +157,15 @@ module Microstation
       Pathname(rel_path)
     end
 
-
     def relative_pdf_path=(path)
       @relative_pdf_path = set_relative_path(path)
     end
-
-
-
   end
 end
 
 module Microstation
-
   class Drawing
-
     class File
-
       include PdfSupport
 
       attr_reader :keywords, :creator, :path
@@ -197,7 +180,6 @@ module Microstation
         @path.to_path
       end
 
-
       def initialize(path)
         @path = Pathname(path)
       end
@@ -210,12 +192,10 @@ module Microstation
         @path.dirname
       end
 
-      def drawing=(drawing)
-        @drawing = drawing
-      end
+      attr_writer :drawing
 
       def mtime
-        self.path.mtime
+        path.mtime
       end
 
       def title
@@ -223,11 +203,11 @@ module Microstation
       end
 
       def app_open_drawing(app, &block)
-        draw = app.open_drawing(self.path,&block)
+        draw = app.open_drawing(path, &block)
       end
 
       def open_drawing(&block)
-        Microstation.open_drawing(self.path,&block)
+        Microstation.open_drawing(path, &block)
       end
 
       def get_meta(dwg)
@@ -235,18 +215,6 @@ module Microstation
         @keywords = dwg.keywords
         @creator = dwg.creator
       end
-
     end
-
-
   end
 end
-
-
-
-
-
-
-
-
-

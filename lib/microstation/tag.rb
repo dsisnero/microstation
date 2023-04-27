@@ -1,4 +1,4 @@
-require_relative 'tagged_element'
+require_relative "tagged_element"
 
 module Microstation
   class Tag < Element
@@ -12,7 +12,7 @@ module Microstation
     end
 
     def write_ole(value)
-      value = value.nil? ? '' : value
+      value = value.nil? ? "" : value
       ole_obj.Value = value
     end
 
@@ -45,7 +45,7 @@ module Microstation
     end
 
     def update_ole(value)
-      value = value.nil? ? '' : value
+      value = value.nil? ? "" : value
       @ole_obj.Value = value
     end
 
@@ -59,7 +59,7 @@ module Microstation
       base = ole_base_element
       id = begin
         base.Id || base.ID64
-      rescue StandardError
+      rescue
         nil
       end
       if id.instance_of?(WIN32OLE_RECORD)

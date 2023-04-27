@@ -12,13 +12,13 @@ module Microstation
       File.open(file) do |f|
         YAML.load(f)
       end
-    rescue StandardError => e
+    rescue => e
       binding.pry
       puts "Could not parse YAML: #{e.message}"
     end
 
     def name
-      template_hash[:name] || Pathname(template).basename.ext('.dgn')
+      template_hash[:name] || Pathname(template).basename.ext(".dgn")
     end
 
     def locals
@@ -38,19 +38,19 @@ module Microstation
     end
 
     def run_with_app(app, options = {})
-      run_options = { app: app }.merge(options)
+      run_options = {app: app}.merge(options)
       run(run_options)
     end
 
     def run(options = {})
       the_template = Template.new(template)
-      template_options = { output_dir: output_dir,
-                           locals: locals,
-                           name: name,
-                           tagsets: tagsets }
+      template_options = {output_dir: output_dir,
+                          locals: locals,
+                          name: name,
+                          tagsets: tagsets}
       run_options = template_options.merge(options)
       the_template.render(run_options)
-    rescue StandardError
+    rescue
       binding.pry
     end
   end

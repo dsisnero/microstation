@@ -6,13 +6,13 @@ module Microstation
       else
         begin
           @ole_obj.Author
-        rescue StandardError
+        rescue
           nil
         end
       end
     end
 
-    alias author author=
+    alias_method :author, :author=
 
     def subject=(var = nil)
       if var
@@ -20,13 +20,13 @@ module Microstation
       else
         begin
           @ole_obj.Subject
-        rescue StandardError
+        rescue
           nil
         end
       end
     end
 
-    alias subject subject=
+    alias_method :subject, :subject=
 
     def comments=(var = nil)
       if var
@@ -34,13 +34,13 @@ module Microstation
       else
         begin
           @ole_obj.Comments
-        rescue StandardError
+        rescue
           nil
         end
       end
     end
 
-    alias comments comments=
+    alias_method :comments, :comments=
 
     def title=(var = nil)
       if var
@@ -48,13 +48,13 @@ module Microstation
       else
         begin
           @ole_obj.Title
-        rescue StandardError
+        rescue
           nil
         end
       end
     end
 
-    alias title title=
+    alias_method :title, :title=
 
     def keywords=(var = nil)
       if var
@@ -62,12 +62,12 @@ module Microstation
       else
         begin
           @ole_obj.Keywords
-        rescue StandardError
+        rescue
           nil
         end
       end
     end
 
-    alias keywords keywords=
+    alias_method :keywords, :keywords=
   end
 end

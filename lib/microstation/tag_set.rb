@@ -1,6 +1,6 @@
 # require File.join(File.dirname(__FILE__) , 'attributes')
-require File.join(File.dirname(__FILE__), 'ts/instance')
-require File.join(File.dirname(__FILE__), 'ts/attribute')
+require File.join(File.dirname(__FILE__), "ts/instance")
+require File.join(File.dirname(__FILE__), "ts/attribute")
 
 module Microstation
   module OleCollection
@@ -10,7 +10,7 @@ module Microstation
 
     def [](name)
       ole_obj(name)
-    rescue StandardError
+    rescue
       nil
     end
 
@@ -85,7 +85,7 @@ module Microstation
       if ts
         begin
           @ole_obj.Remove(name)
-        rescue StandardError
+        rescue
           nil
         end
         ts.close
@@ -103,7 +103,7 @@ module Microstation
 
       ole = begin
         @ole_obj.add(name)
-      rescue StandardError
+      rescue
         binding.pry
       end
       # ts = Tagset.new(ole)
@@ -216,7 +216,7 @@ module Microstation
     def init_definitions
       results = []
       ole_tag_definitions.each do |ole|
-        results << TS::Attribute.new(ole, { definer: self })
+        results << TS::Attribute.new(ole, {definer: self})
       end
       results
     end

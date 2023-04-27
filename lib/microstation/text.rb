@@ -1,4 +1,4 @@
-require 'microstation/element'
+require "microstation/element"
 
 module Microstation
   class Text < Element
@@ -38,11 +38,11 @@ module Microstation
       rotation = ole_obj.Rotation
       inverse_rotation = begin
         app_ole_obj.Matrix3dInverse(rotation)
-      rescue StandardError
+      rescue
         pry
       end
       transform = app_ole_obj.Transform3dFromMatrix3dandFixedPoint3d(app_ole_obj.Matrix3dInverse(rotation),
-                                                                     ole_obj.origin)
+        ole_obj.origin)
       ole_obj.transform transform
       pts = []
 
@@ -55,7 +55,7 @@ module Microstation
     end
 
     def method_missing(meth, *args, &block)
-      if meth =~ /^[A-Z]/
+      if /^[A-Z]/.match?(meth)
         ole_obj.send(meth, *args)
       else
         dup = @original.dup

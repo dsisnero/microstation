@@ -22,8 +22,8 @@ module Microstation
       return [] unless scan_result
 
       scan_enum = Microstation::Enumerator.new(scan_result)
-      result =  []
-      if block_given?
+      result = []
+      if block
         scan_enum.each(&block)
       else
         scan_enum.each do |item|
@@ -31,7 +31,7 @@ module Microstation
         end
       end
 
-      return result unless block_given?
+      return result unless block
     end
 
     private
@@ -40,7 +40,7 @@ module Microstation
       criteria.resolve
       scan_result = begin
         ole_obj.Scan(criteria.ole_obj)
-      rescue StandardError
+      rescue
         nil
       end
     end

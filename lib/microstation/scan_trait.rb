@@ -1,4 +1,4 @@
-require_relative 'criteria_creation_t'
+require_relative "criteria_creation_t"
 module Microstation
   module ScanTrait
     def create_scanner(name, &block)

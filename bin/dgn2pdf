@@ -1,15 +1,14 @@
 #!/usr/bin/env ruby
-$LOAD_PATH.unshift('../lib')
-require 'optparse'
-require 'methadone'
-require 'microstation'
+$LOAD_PATH.unshift("../lib")
+require "optparse"
+require "methadone"
+require "microstation"
 
 class App
   include Methadone::Main
   include Methadone::CLILogging
 
   main do |directory, output_dir|
-
     directory_path = Pathname.new(directory).expand_path
     exit_now! "arg directory: #{directory_path} doesn't exist" unless directory_path.directory?
     Microstation.dgn2pdf(directory_path, output_dir)
@@ -24,7 +23,7 @@ class App
 
   description "Convert a directory of Microstation files (*.dgn) to pdf"
 
-  on("-o","--output_dir","Output Dir")
+  on("-o", "--output_dir", "Output Dir")
 
 
   arg :directory

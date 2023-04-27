@@ -1,4 +1,4 @@
-require 'microstation/property_handler'
+require "microstation/property_handler"
 
 class WIN32OLE
   def to_ole
@@ -98,7 +98,7 @@ module Microstation
     include ElementTrait
 
     def self.convert_item(ole, app, cell = nil)
-      return Point3d.from_ole(ole) if ole.instance_of?(WIN32OLE_RECORD) && ole.typename == 'Point3d'
+      return Point3d.from_ole(ole) if ole.instance_of?(WIN32OLE_RECORD) && ole.typename == "Point3d"
       return ole unless ole.instance_of?(WIN32OLE)
 
       case ole.Type
@@ -145,12 +145,14 @@ module Microstation
       !!@cell
     end
 
-    def read_ole(ole); end
+    def read_ole(ole)
+    end
 
-    def write_ole(value); end
+    def write_ole(value)
+    end
 
     def method_missing(meth, *args, &block)
-      if meth.to_s =~ /^[A-Z]/
+      if /^[A-Z]/.match?(meth.to_s)
         result = ole_obj.send(meth, *args, &block)
         Element.convert_item(result, app)
       else
@@ -179,7 +181,7 @@ module Microstation
         write_ole(value)
         @original = read_ole(ole_obj)
         true
-      rescue StandardError => e
+      rescue => e
         @original = saved_original
         false
       end
@@ -222,7 +224,7 @@ module Microstation
       cell = ole if ole_cell(ole)
       begin
         ole.ResetElementEnumeration
-      rescue StandardError
+      rescue
         binding.pry
       end
       while ole.MoveToNextElement
@@ -241,7 +243,7 @@ module Microstation
 
     def each(ole = ole_obj, &block)
       return unless ole.IsComplexElement
-      return to_enum(:each) unless block_given?
+      return to_enum(:each) unless block
 
       if ole.IsCellElement
         each_cell(ole, &block)

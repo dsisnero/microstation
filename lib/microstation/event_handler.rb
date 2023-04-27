@@ -5,7 +5,7 @@ module Microstation
     end
 
     def add_handler(event, &block)
-      @handlers[event] = block if block_given?
+      @handlers[event] = block if block
     end
 
     def get_handler(event)

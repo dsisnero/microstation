@@ -45,49 +45,48 @@ module Microstation
     end
 
     # MsdCadInputType InputType
-    def get_input_type()
+    def get_input_type
       ole_obj.InputType
     end
 
     # BSTR Keyin
-    def get_keyin()
-      ret = ole_obj._getproperty(1610743809, [], [])
+    def get_keyin
+      ret = ole_obj._getproperty(1_610_743_809, [], [])
       @lastargs = WIN32OLE::ARGV
       ret
     end
 
     # Point3d Point
-    def get_point()
+    def get_point
       app.to_point3d(ole_obj.Point)
     end
 
     # BSTR CommandKeyin
-    def get_command_keyin()
-      ret = ole_obj._getproperty(1610743811, [], [])
+    def get_command_keyin
+      ret = ole_obj._getproperty(1_610_743_811, [], [])
       @lastargs = WIN32OLE::ARGV
       ret
     end
 
     # _View View
-    def get_view()
-      ret = ole_obj._getproperty(1610743812, [], [])
+    def get_view
+      ret = ole_obj._getproperty(1_610_743_812, [], [])
       @lastargs = WIN32OLE::ARGV
       ret
     end
 
     # Point3d ScreenPoint
-    def get_screen_point()
-      ret = ole_obj._getproperty(1610743813, [], [])
+    def get_screen_point
+      ret = ole_obj._getproperty(1_610_743_813, [], [])
       @lastargs = WIN32OLE::ARGV
       ret
     end
 
     # I4 CursorButton
-    def get_cursor_button()
-      ret = ole_obj._getproperty(1610743814, [], [])
+    def get_cursor_button
+      ret = ole_obj._getproperty(1_610_743_814, [], [])
       @lastargs = WIN32OLE::ARGV
       ret
     end
   end
-
 end

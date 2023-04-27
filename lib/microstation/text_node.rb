@@ -56,7 +56,7 @@ module Microstation
         new_text_ole.AddTextLine(line)
       end
       @ole_obj = new_text_ole
-    rescue StandardError => e
+    rescue => e
       @ole_obj = orig_ole
     end
 
@@ -91,7 +91,7 @@ module Microstation
     end
 
     def method_missing(meth, *args, &block)
-      if meth =~ /^[A-Z]/
+      if /^[A-Z]/.match?(meth)
         ole_obj.send(meth, *args)
       else
         copy = @original.dup

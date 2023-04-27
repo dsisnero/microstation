@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-require 'erb'
-require 'microstation'
-require 'liquid'
-require 'fileutils'
-require 'tmpdir'
-require_relative 'changer'
-require File.join(File.dirname(__FILE__), 'file_tests')
-require File.join(File.dirname(__FILE__), 'errors')
+require "erb"
+require "microstation"
+require "liquid"
+require "fileutils"
+require "tmpdir"
+require_relative "changer"
+require File.join(File.dirname(__FILE__), "file_tests")
+require File.join(File.dirname(__FILE__), "errors")
 
 module Microstation
   class Template
@@ -47,14 +47,14 @@ module Microstation
     end
 
     def change_template_text_normal(drawing, locals = {})
-      drawing.scan_text do |text|
+      drawing.scan_text do |_model, text|
         new_text = update_liquid_text(text, locals)
         text.replace new_text if new_text != text.to_s
       end
     end
 
     def change_template_text_in_cells(drawing, locals = {})
-      drawing.scan_cells do |c|
+      drawing.scan_cells do |_model, c|
         c.text_elements do |text|
           new_text = update_liquid_text(text, locals)
           text.replace new_text if new_text != text.to_s
@@ -67,7 +67,7 @@ module Microstation
       compiled = ::Liquid::Template.parse(text.to_s)
       new_text = begin
         compiled.render(update_hash)
-      rescue StandardError
+      rescue
         text
       end
     end

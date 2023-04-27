@@ -5,28 +5,20 @@ module Microstation
   end
 end
 
-
 module Microstation
-
-
   class Drawing
-
-
-
     def number
       binding.pry
-      Drawing::Number.from_string(self.basename)
+      Drawing::Number.from_string(basename)
     end
 
     class Number
-
       DRAWING_RE = /(.+)-.+-(.+)-(.+).dgn/
 
       def self.from_string(drawing_name)
         md = DRAWING_RE.match(drawing_name.to_s)
-        new(md[1],md[2],md[3])
+        new(md[1], md[2], md[3])
       end
-
 
       def Index(str)
         return str if str == Drawing::Index
@@ -37,37 +29,30 @@ module Microstation
 
       attr_reader :locid, :factype, :index
 
-      def initialize(locid,factype, index)
+      def initialize(locid, factype, index)
         @locid = locid.to_s.upcase
         @factype = factype.to_s.upcase
         @index = Index(index)
       end
 
-
-
       def to_s
-        [locid,'D',factype,index.to_s].join("-")
+        [locid, "D", factype, index.to_s].join("-")
       end
 
       def discipline
         index.discipline
       end
 
-      def +(n)
-        self.class.new(locid,factype,index.+(n))
+      def +(other)
+        self.class.new(locid, factype, index.+(other))
       end
 
-      def -(n)
-        self.class.new(locid,factype,index.-(n))
+      def -(other)
+        self.class.new(locid, factype, index.-(other))
       end
-
     end
 
-
     class Index
-
-
-
       def initialize(str)
         return str if str === Index
         @nbr = str
@@ -97,14 +82,12 @@ module Microstation
         "#{discipline}#{dstring}"
       end
 
-      def +(n)
-        self.class.new( combined_string( digits_string(as_int + n)))
+      def +(other)
+        self.class.new(combined_string(digits_string(as_int + other)))
       end
 
-
-      def -(n)
-        self.class.new( combined_string( digits_string(as_int - n)))
-
+      def -(other)
+        self.class.new(combined_string(digits_string(as_int - other)))
       end
 
       def succ
@@ -114,11 +97,6 @@ module Microstation
       def pred
         self.-(1)
       end
-
-
-
     end
-
   end
-
 end

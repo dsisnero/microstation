@@ -1,9 +1,6 @@
 module Microstation
-
   module Scan
-
     module Subtype
-
       def subtype_inclusions
         @subtype_inclusions ||= []
       end
@@ -28,13 +25,6 @@ module Microstation
           ole_obj.IncludeSubtype(subtype)
         end
       end
-
     end
-
   end
-
 end
-
-
-      
-      

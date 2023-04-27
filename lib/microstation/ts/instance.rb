@@ -56,13 +56,13 @@ module Microstation
       def to_hash
         result = {}
         @elements.each do |ele|
-          result[ele.name] = ele.value unless ele.value == '' || ele.value.nil?
+          result[ele.name] = ele.value unless ele.value == "" || ele.value.nil?
         end
         result
       end
 
       def attribute_hash
-        result = { 'microstation_id' => microstation_id }
+        result = {"microstation_id" => microstation_id}
         each_pair do |name, value|
           result[name] = value
         end
@@ -70,9 +70,9 @@ module Microstation
       end
 
       def to_h
-        result = { 'tagset_name' => tagset.name, 'microstation_id' => microstation_id,
-                   'microstation_model' => microstation_model }
-        result['attributes'] = attribute_hash
+        result = {"tagset_name" => tagset.name, "microstation_id" => microstation_id,
+                  "microstation_model" => microstation_model}
+        result["attributes"] = attribute_hash
         result
       end
 
@@ -91,7 +91,7 @@ module Microstation
       end
 
       def find(&block)
-        select(&block).first
+        find(&block)
       end
 
       def each(&block)
@@ -120,9 +120,9 @@ module Microstation
       end
 
       def method_missing(meth, *args, &block)
-        base = meth.to_s.sub('=', '')
+        base = meth.to_s.sub("=", "")
         if attributes.include?(base)
-          if meth.match(/(=)/)
+          if /(=)/.match?(meth)
             update_element(base, *args)
           else
             element_value(base.to_s)

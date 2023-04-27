@@ -9,7 +9,7 @@ module Microstation
     end
 
     def get_capabilities
-      @capabilities = @config[variable].split(';')
+      @capabilities = @config[variable].split(";")
     end
 
     def search(name)
@@ -17,11 +17,11 @@ module Microstation
     end
 
     def enabled
-      @capabilities.select { |c| c.start_with?('+') }
+      @capabilities.select { |c| c.start_with?("+") }
     end
 
     def disabled
-      @capabilities.select { |c| c.start_with?('-') }
+      @capabilities.select { |c| c.start_with?("-") }
     end
 
     def enabled?(name)
@@ -35,7 +35,7 @@ module Microstation
     end
 
     def write_configuration
-      caps = @capabilities.uniq.join(';')
+      caps = @capabilities.uniq.join(";")
       @config.set!(variable, caps)
     end
 
@@ -75,7 +75,8 @@ module Microstation
   end
 
   class App
-    def with_config; end
+    def with_config
+    end
   end
 
   class Configuration
@@ -133,7 +134,7 @@ module Microstation
     end
 
     def capabilities_all
-      @workmode_all ||= Capabilities.new(self, '_USTN_CAPABILITY')
+      @workmode_all ||= Capabilities.new(self, "_USTN_CAPABILITY")
     end
 
     def expand(string)
@@ -150,7 +151,7 @@ module Microstation
       workspace.ConfigurationVariableValue(variable)
     end
 
-    def should_update?(key, options = { force: false })
+    def should_update?(key, options = {force: false})
       return true unless exists? key
 
       force = options.fetch(:force) { false }

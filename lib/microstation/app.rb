@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require_relative 'wrap'
-require_relative 'point3d'
-require_relative 'event_handler'
-require_relative 'functions'
-require 'pry'
+require_relative "wrap"
+require_relative "point3d"
+require_relative "event_handler"
+require_relative "functions"
+require "pry"
 
 class WIN32OLE
   def ole_obj
@@ -27,7 +27,7 @@ module Windows
     end
 
     def fs_object
-      @fs_object ||= WIN32OLE.new('Scripting.FileSystemObject')
+      @fs_object ||= WIN32OLE.new("Scripting.FileSystemObject")
     end
   end
 end
@@ -43,7 +43,7 @@ module Microstation
   class App
     include Functions
 
-    @default_app_options = { visible: false }
+    @default_app_options = {visible: false}
 
     class << self
       attr_accessor :default_app_options
@@ -71,7 +71,7 @@ module Microstation
           the_app = new(**opts)
           binding.pry if the_app.nil?
           yield the_app
-        rescue StandardError
+        rescue
           binding.pry
         ensure
           the_app.quit if the_app.respond_to? :quit
@@ -86,8 +86,9 @@ module Microstation
       # (see #open_drawing)
       # @yield Drawing
       # @return [void]
-      def open_drawing(drawing, app_options: {}, options: {}, &block)
-        run(**app_options) do |app|
+      def open_drawing(drawing, **options, &block)
+        opt_visible = options.delete(:visible) || false
+        run(visible: opt_visible) do |app|
           app.open_drawing(drawing, **options, &block)
         end
       end
@@ -111,23 +112,27 @@ module Microstation
       # @param error_proc [Proc]
       # @yield [Drawing]
       # @return [void]
-      def with_drawings(*files, visible: true, readonly: false, error_proc: ::Microstation.default_error_proc, &block)
+      def with_drawings(*files, **options, &block)
         # drawing_options = default_drawing_options.merge(options)
         # app_options = default_app_options
         errors = []
         files = files[0] if files[0].is_a? Array
+        opt_visible = options.delete(:visible) || false
+        error_proc = options.delete(:error_proc)
         begin
-          the_app = new(visible: visible)
+          the_app = new(visible: opt_visible)
           files_enum = files.each
           loop do
             file = files_enum.next
             puts "opening #{file}.."
             begin
-              the_app.open_drawing(file, readonly: readonly, error_proc: error_proc, &block)
+              the_app.open_drawing(file, **options, &block)
               the_app.ole_obj.ole_methods # check if server still open
-            rescue StandardError => e
+            rescue => e
+              raise e unless error_proc
+
               error_proc.call(e, file)
-              the_app = new(app_options)
+              the_app = new(visible: opt_visible)
             end
           end
         ensure
@@ -135,7 +140,7 @@ module Microstation
           the_app = nil
         end
       end
-  end
+    end
 
     attr_reader :scanners, :visible, :app_event, :project_dir
 
@@ -146,12 +151,12 @@ module Microstation
       @visible = visible
       @event_handler = event_handler
       @ole_obj, @app_event = init_ole_and_app_event(visible: @visible, event_handler: @event_handler, tries: 5,
-                                                    sleep_duration: 0.5)
+        sleep_duration: 0.5)
       @run_loop = true
       @windows = Windows::FileSystem.new
       #  make_visible(visible)
       @scanners = {}
-    rescue StandardError => e
+    rescue => e
       binding.pry
     end
 
@@ -179,13 +184,13 @@ module Microstation
     #
     def default_event_handler
       event_handler = EventHandler.new
-      event_handler.add_handler('OnDesignFileOpened') do |*_args|
-        puts 'drawing opened'
+      event_handler.add_handler("OnDesignFileOpened") do |*_args|
+        puts "drawing opened"
         @drawing_opened = true
       end
-      event_handler.add_handler('OnDesignFileClosed') do |*_args|
+      event_handler.add_handler("OnDesignFileClosed") do |*_args|
         @drawing_opened = false
-        puts 'drawing closed'
+        puts "drawing closed"
       end
       event_handler
     end
@@ -199,7 +204,7 @@ module Microstation
     # @return [<Type>] <description>
     #
     def register_handler(event, &block)
-      @event_handler.add_handler(event, &block) unless event == 'OnQuit'
+      @event_handler.add_handler(event, &block) unless event == "OnQuit"
     end
 
     #
@@ -214,7 +219,7 @@ module Microstation
     end
 
     def exit_message_looop
-      puts 'Microstation exiting...'
+      puts "Microstation exiting..."
       @run_loop = false
     end
 
@@ -228,7 +233,7 @@ module Microstation
     end
 
     def init_ole_and_app_event(visible: @visible, event_handler: @event_handler, tries: 5, sleep_duration: 1)
-      ole = WIN32OLE.new('MicrostationDGN.Application')
+      ole = WIN32OLE.new("MicrostationDGN.Application")
       sleep(sleep_duration)
       ole.Visible = visible
       ole.IsProcessLocked = true
@@ -236,12 +241,12 @@ module Microstation
       app_event = WIN32OLE_EVENT.new(ole)
       app_event.handler = event_handler
       [ole, app_event]
-    rescue StandardError => e
+    rescue => e
       tries -= 1
       sleep_duration += 1.5
       puts "Error: #{e}. #{tries} tries left."
       retry if tries.positive?
-      raise e, 'unable to init ole app'
+      raise e, "unable to init ole app"
     end
 
     # @return [Boolean] whether the app is visible
@@ -274,7 +279,7 @@ module Microstation
 
     def normalize_name(name)
       name = Pathname.new(name) unless name.is_a? Pathname
-      name = name.ext('.dgn') unless name.extname.to_s == /\.(dgn|dwg)$/
+      name = name.ext(".dgn") unless name.extname.to_s == /\.(dgn|dwg)$/
       (base_dir + name).expand_path
     end
 
@@ -292,7 +297,7 @@ module Microstation
       is_ok = true
       begin
         @ole_obj.Visible
-      rescue StandardError => e
+      rescue => e
         is_ok = false
       end
 
@@ -327,14 +332,12 @@ module Microstation
 
       begin
         ole = ole_open_drawing(windows_path(filename), readonly: readonly, wait_time: wait_time,
-                                                       wait_interval: wait_interval)
-      rescue StandardError => e
-        if error_proc
-          error_proc.call(filename)
-          return
-        else
-          raise e
-        end
+          wait_interval: wait_interval)
+      rescue => e
+        raise e unless error_proc
+
+        error_proc.call(filename)
+        return
       end
       drawing = drawing_from_ole(ole)
       return drawing unless block_given?
@@ -365,7 +368,7 @@ module Microstation
 
     # @return [String] the configuration variable USERNAME
     def username
-      configuration['USERNAME']
+      configuration["USERNAME"]
     end
 
     # create a new drawing
@@ -388,12 +391,12 @@ module Microstation
       windows_name = windows_path(filename)
       ole = new_ole_drawing(seedfile, windows_name, open: open, wait_time: wait_time, wait_interval: wait_interval)
       drawing = drawing_from_ole(ole)
-      return drawing unless block_given?
+      return drawing unless block
 
       begin
         yield drawing
-      rescue StandardError => e
-        'puts error in new drawing'
+      rescue => e
+        "puts error in new drawing"
         raise e
       ensure
         drawing.close
@@ -406,7 +409,7 @@ module Microstation
       raise "drawing not opened in #{wait_time}" unless drawing_opened?
 
       ole
-    rescue StandardError => e
+    rescue => e
       raise e
     end
 
@@ -417,7 +420,7 @@ module Microstation
     # prepend a dir to the MS_SEEDFILES configuration
     # @param dir [String,Pathname]
     def prepend_seed_path(dir)
-      configuration.prepend('MS_SEEDFILES', windows_path(dir))
+      configuration.prepend("MS_SEEDFILES", windows_path(dir))
     end
 
     def drawing_from_ole(ole)
@@ -425,7 +428,7 @@ module Microstation
     end
 
     def determine_seed(seedfile)
-      return configuration['MS_DESIGNSEED'] unless seedfile
+      return configuration["MS_DESIGNSEED"] unless seedfile
 
       seed = find_seed(seedfile)
       return seed.to_s if seed
@@ -435,7 +438,7 @@ module Microstation
 
     # @return [String] the configuration variable MS_SEEDFILES
     def configured_seed_paths
-      configuration['MS_SEEDFILES']
+      configuration["MS_SEEDFILES"]
     end
 
     # find the seedfile
@@ -446,7 +449,7 @@ module Microstation
     # * If the seed file is not found search MS_SEEDFILES
     # @return [Pathname] seedfile the found seedfile
     def find_seed(seedfile)
-      seed = Pathname(seedfile).expand_path.sub_ext('.dgn')
+      seed = Pathname(seedfile).expand_path.sub_ext(".dgn")
       return seed if seed.file?
 
       find_seed_in_seed_dirs(seed.basename)
@@ -459,7 +462,7 @@ module Microstation
 
     # @return [Array] returns the MS_SEEDFILES as Pathnames Array
     def seed_paths
-      configured_seed_paths.split(';').map { |d| Pathname(d) }
+      configured_seed_paths.split(";").map { |d| Pathname(d) }
     end
 
     def eval_cexpression(string)
@@ -476,7 +479,7 @@ module Microstation
       @scanners.each { |_name, sc| sc.close }
       begin
         ole_obj.Quit
-      rescue StandardError
+      rescue
         nil
       end
     end
@@ -490,8 +493,8 @@ module Microstation
       drawing_from_ole(ole)
     end
 
-    alias active_drawing active_design_file
-    alias current_drawing active_design_file
+    alias_method :active_drawing, :active_design_file
+    alias_method :current_drawing, :active_design_file
 
     #
     # close the active_design_file
@@ -502,7 +505,7 @@ module Microstation
       active_design_file.close if active_design_file?
     end
 
-    alias close_current_drawing close_active_drawing
+    alias_method :close_current_drawing, :close_active_drawing
 
     #
     #
@@ -513,7 +516,7 @@ module Microstation
       ole_obj.HasActiveDesignFile
     end
 
-    alias current_design_file? active_design_file?
+    alias_method :current_design_file?, :active_design_file?
 
     #
     # <Description>
@@ -569,7 +572,7 @@ module Microstation
 
       begin
         yield queue
-      rescue StandardError
+      rescue
       ensure
         queue.close
         queue = nil
@@ -598,43 +601,43 @@ module Microstation
     #
     def show_temp_message(text, location: nil)
       loc = case location
-            when :left
-              MSD::MsdStatusBarAreaLeft
-            when :middle
-              MSD::MsdStatusBarAreaMiddle
-            else
-              MSD::MsdStatusBarAreaLeft
-            end
+      when :left
+        MSD::MsdStatusBarAreaLeft
+      when :middle
+        MSD::MsdStatusBarAreaMiddle
+      else
+        MSD::MsdStatusBarAreaLeft
+      end
       ole_obj.ShowTempMessage(loc, text)
     end
 
     def can_open?(filename)
       ext = File.extname(filename)
-      (ext == '.dwg') || (ext == '.dgn')
+      (ext == ".dwg") || (ext == ".dgn")
     end
 
     def active_model_reference
       DefaultModel.new(self, ole_obj.ActiveModelReference)
-    rescue StandardError
+    rescue
       nil
     end
 
     def default_model
       DefaultModel.new(self, ole_obj.DefaultModelReference)
-    rescue StandardError
+    rescue
       nil
     end
 
     def ole_point
-      ::WIN32OLE_RECORD.new('Point3d', ole_obj)
+      ::WIN32OLE_RECORD.new("Point3d", ole_obj)
     end
 
     def ole_rotation
-      ::WIN32OLE_RECORD.new('Rotation', ole_obj)
+      ::WIN32OLE_RECORD.new("Rotation", ole_obj)
     end
 
     def ole_matrix
-      ::WIN32OLE_RECORD.new('Matrix', ole_obj)
+      ::WIN32OLE_RECORD.new("Matrix", ole_obj)
     end
 
     #
@@ -655,7 +658,7 @@ module Microstation
     end
 
     def to_ole_matrix3d(vec)
-      if vec.instance_of?(WIN32OLE_RECORD) && vec.typename == 'Matrix3d'
+      if vec.instance_of?(WIN32OLE_RECORD) && vec.typename == "Matrix3d"
         vec
       else
         binding.pry
@@ -690,7 +693,7 @@ module Microstation
     # @return [Boolean] true if pt is WIN32OLE_RECORD of 'Point3d'
     #
     def ole_point3d?(pt)
-      pt.instance_of?(WIN32OLE_RECORD) && pt.typename == 'Point3d'
+      pt.instance_of?(WIN32OLE_RECORD) && pt.typename == "Point3d"
     end
 
     def create_text_node(origin, rotation, temp = nil)
@@ -720,7 +723,7 @@ module Microstation
       when Point3d
         pt
       when WIN32OLE_RECORD
-        Point3d.from_ole(pt) if pt.typename == 'Point3d'
+        Point3d.from_ole(pt) if pt.typename == "Point3d"
       end
     end
 
@@ -733,31 +736,31 @@ module Microstation
     end
 
     def my_place_line
-      require_relative 'primitive_command_interface'
+      require_relative "primitive_command_interface"
       start_primitive LineCreation
     end
 
     def method_missing(meth, *args, &block)
-      if meth.to_s =~ /^[A-Z]/
-        require 'pry'
+      if /^[A-Z]/.match?(meth.to_s)
+        require "pry"
         binding.pry
         result = ole_obj.send(meth, *args, &block)
       else
         super(meth, *args, &block)
       end
-    rescue StandardError => e
+    rescue => e
       binding.pry
     end
 
     protected
 
     def ole_open_drawing(path, readonly: false, wait_time: 500, wait_interval: 0.5)
-      ole = ole_obj.OpenDesignFile(windows_path(path), 'ReadOnly' => readonly)
+      ole = ole_obj.OpenDesignFile(windows_path(path), "ReadOnly" => readonly)
       wait_drawing_opened(wait_time, wait_interval)
       raise "drawing not opened in #{wait_time}" unless drawing_opened?
 
       ole
-    rescue StandardError => e
+    rescue => e
       raise e
     end
 

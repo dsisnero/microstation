@@ -1,6 +1,6 @@
 # require_relative 'scan/scan_trait'
-require 'microstation/wrap'
-require_relative 'model_trait'
+require "microstation/wrap"
+require_relative "model_trait"
 
 # require_relative 'ts/tagset_trait'
 # require_relative 'graphics'

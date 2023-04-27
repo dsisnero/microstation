@@ -38,7 +38,7 @@ module Microstation
       def to_hash
         result = {}
         @elements.each do |ele|
-          result[ele.name] = ele.value unless ele.value == '' || ele.value.nil?
+          result[ele.name] = ele.value unless ele.value == "" || ele.value.nil?
         end
         result
       end
@@ -61,9 +61,9 @@ module Microstation
 
       def method_missing(meth, *args, &block)
         # binding.pry
-        base = meth.to_s.sub('=', '')
+        base = meth.to_s.sub("=", "")
         if attributes.include?(base)
-          if meth.match(/(=)/)
+          if /(=)/.match?(meth)
             update_element(base, *args)
           else
             element_value(base.to_s)

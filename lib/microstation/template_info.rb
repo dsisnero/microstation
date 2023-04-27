@@ -12,7 +12,7 @@ module Microstation
       end
     end
 
-    LIQUID_REGEXP = /{{([^}}]+)}}/
+    LIQUID_REGEXP = /{{([^}]+)}}/
 
     attr_reader :drawing, :placeholder_keys, :template, :tagsets, :locals, :drawing_path, :tagset_filter, :tagset_map
 
@@ -58,20 +58,20 @@ module Microstation
 
     def to_h
       filtered = if tagset_filter
-                   tagsets.select { |ts| tagset_filter.call(ts) }
-                 else
-                   tagsets.dup
-                 end
+        tagsets.select { |ts| tagset_filter.call(ts) }
+      else
+        tagsets.dup
+      end
       mapped_tsets = filtered.map { |ts| tagset_map.call(ts) }
-      { template: template,
-        output_dir: output_dir,
-        name: drawing_name,
-        locals: locals,
-        tagsets: mapped_tsets }
+      {template: template,
+       output_dir: output_dir,
+       name: drawing_name,
+       locals: locals,
+       tagsets: mapped_tsets}
     end
 
     def default_filter
-      ->(ts) { ts.name == 'faatitle' }
+      ->(ts) { ts.name == "faatitle" }
     end
 
     def before_locals(locals)
@@ -85,7 +85,7 @@ module Microstation
     def do_tagset_mappings
       @tagset_mappings.each do |ts_mapper|
         ts_mapper.call(tagsets)
-        ti_instances = tagsets.select { |ts| ts['tag_name'] == k }
+        ti_instances = tagsets.select { |ts| ts["tag_name"] == k }
         ti_instances.each do |ti|
           ti.attributes.map
         end
@@ -94,10 +94,10 @@ module Microstation
 
     def faa_map
       lambda { |ts|
-        if ts['tagset_name'] == 'faatitle'
-          atts = ts['attributes']
+        if ts["tagset_name"] == "faatitle"
+          atts = ts["attributes"]
           new_atts = atts.keep_if { |k, _v| faa_title_keys.include? k }
-          ts['attributes'] = new_atts
+          ts["attributes"] = new_atts
           ts
         else
           ts
@@ -114,12 +114,12 @@ module Microstation
     end
 
     def yaml_filename
-      drawing_path.basename.ext('yaml')
+      drawing_path.basename.ext("yaml")
     end
 
     def dump(dir = output_dir)
       dir = Pathname(dir)
-      File.open(dir + yaml_filename, 'w') { |f| f.puts to_yaml }
+      File.open(dir + yaml_filename, "w") { |f| f.puts to_yaml }
     end
 
     def to_yaml
@@ -134,12 +134,9 @@ module Microstation
 
     def get_entry_points(drawing)
       result = []
-      drawing.scan_all_text do |m, text|
-        binding.pry if text =~ /txt1/
-
-        result << [m, text.to_s] if text.to_s =~ /{{([^}}])+}}/
+      drawing.scan_text do |model, text|
+        result << [model, text.to_s] if /{{([^}])+}}/.match?(text.to_s)
       end
-      binding.pry
       result
     end
 
@@ -154,7 +151,7 @@ module Microstation
 
     def keys_to_h(keys = @placeholder_keys)
       keys.each_with_object({}) do |k, h|
-        h[k] = ''
+        h[k] = ""
       end
     end
   end

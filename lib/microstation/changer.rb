@@ -29,15 +29,15 @@ module Microstation
       tmp_dgn = the_app ? change_in_tempfile(the_app, &block) : change_once_in_tempfile(&block)
       FileUtils.mv(tmp_dgn.to_s, newname.to_s)
       puts "Saved drawing #{newname}"
-    rescue StandardError => e
-      puts 'error in changing file'
+    rescue => e
+      puts "error in changing file"
       raise e
     end
 
     def change_in_tempfile(app, &block)
       path = Pathname(File.join(::Dir.tmpdir, "#{template_filename}_#{Time.now.to_i}_#{rand(1000)}"))
       app.new_drawing(path, seedfile: @template) do |drawing|
-        if block_given?
+        if block
           block.call(drawing)
         else
           default_block.call(drawing)

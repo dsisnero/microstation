@@ -2,7 +2,7 @@ module Microstation
   class Point3d
     class << self
       def ole_point3d?(ole)
-        ole.instance_of?(WIN32OLE_RECORD) && ole.typename == 'Point3d'
+        ole.instance_of?(WIN32OLE_RECORD) && ole.typename == "Point3d"
       end
 
       def cartesian_to_polar(x, y)
@@ -11,13 +11,15 @@ module Microstation
         [r, angle]
       end
 
-      def from_polar_degrees(r, a); end
+      def from_polar_degrees(r, a)
+      end
 
       def from_ole(ole)
         new(ole.X, ole.Y, ole.Z)
       end
 
-      def polar_to_cartesian(r, a); end
+      def polar_to_cartesian(r, a)
+      end
     end
 
     attr_reader :x, :y, :z
@@ -50,6 +52,7 @@ module Microstation
       new(0.0, 0.0, 0, 0)
     end
 
-    def to_cartesian; end
+    def to_cartesian
+    end
   end
 end

@@ -1,4 +1,4 @@
-require 'microstation/element'
+require "microstation/element"
 
 module Microstation
   class Line < Element

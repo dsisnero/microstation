@@ -1,17 +1,17 @@
-require 'pathname'
+require "pathname"
 
 class Pathname
-  def ext(newext = '')
+  def ext(newext = "")
     str = to_s
-    return dup if ['.', '..'].include? str
+    return dup if [".", ".."].include? str
 
-    if newext != ''
-      newext = newext =~ /^\./ ? newext : ('.' + newext)
+    if newext != ""
+      newext = (newext =~ /^\./) ? newext : ("." + newext)
     end
     Pathname.new(str.dup.sub!(%r{([^/\\])\.[^./\\]*$}) { ::Regexp.last_match(1) + newext } || str + newext)
   end
 
-  def extstr(newext = '')
+  def extstr(newext = "")
     Pathname.new(to_s.ext(newext))
   end
 

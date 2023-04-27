@@ -1,5 +1,5 @@
-require_relative 'ole_cad_input_message'
-require 'dry/monads'
+require_relative "ole_cad_input_message"
+require "dry/monads"
 module Microstation
   class CadInputQueue
     include Dry::Monads[:result]
@@ -49,7 +49,7 @@ module Microstation
       OLE_CadInputMessage.new(com, app)
     end
 
-    def get_point(prompt: 'Enter vertex')
+    def get_point(prompt: "Enter vertex")
       show_prompt(prompt)
       mycim = get_input(InputType::DataPoint, InputType::Reset)
       if mycim.reset?
@@ -74,9 +74,9 @@ module Microstation
     end
 
     def clear_ui
-      app.show_prompt('')
-      app.show_status('')
-      app.show_command('')
+      app.show_prompt("")
+      app.show_status("")
+      app.show_command("")
     end
 
     def method_missing(name, *args, &block)

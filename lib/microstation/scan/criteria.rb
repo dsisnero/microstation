@@ -1,16 +1,16 @@
-require_relative 'klass'
-require_relative 'type'
-require_relative 'level'
-require_relative 'color'
-require_relative 'line_style'
-require_relative 'line_weight'
-require_relative 'subtype'
-require_relative 'range'
+require_relative "klass"
+require_relative "type"
+require_relative "level"
+require_relative "color"
+require_relative "line_style"
+require_relative "line_weight"
+require_relative "subtype"
+require_relative "range"
 
 module Microstation
   class App
     def create_ole_scan_criteria
-      ole_obj.CreateObjectInMicroStation('MicroStationDGN.ElementScanCriteria')
+      ole_obj.CreateObjectInMicroStation("MicroStationDGN.ElementScanCriteria")
     end
   end
 end
@@ -33,7 +33,7 @@ module Microstation
         sc = create(name, app)
         return sc unless block
 
-        block.arity < 1 ? sc.instance_eval(&block) : block.call(sc)
+        (block.arity < 1) ? sc.instance_eval(&block) : block.call(sc)
         sc
       end
 
