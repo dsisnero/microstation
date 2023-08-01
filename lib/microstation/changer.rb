@@ -21,12 +21,12 @@ module Microstation
       path
     end
 
-    def run(name: nil, output_dir: nil, &block)
+    def run(name: nil, output_dir: nil, options: {}, &block)
       lname = name || @name
       loutput_dir = output_dir || @output_dir
       output_path = ensure_output_path(loutput_dir)
       newname = output_path + lname
-      tmp_dgn = the_app ? change_in_tempfile(the_app, &block) : change_once_in_tempfile(&block)
+      tmp_dgn = the_app ? change_in_tempfile(the_app, &block) : change_once_in_tempfile(options: options, &block)
       FileUtils.mv(tmp_dgn.to_s, newname.to_s)
       puts "Saved drawing #{newname}"
     rescue => e
@@ -49,8 +49,8 @@ module Microstation
       raise e
     end
 
-    def change_once_in_tempfile(&block)
-      ::Microstation.run do |app|
+    def change_once_in_tempfile(options: {visible: false}, &block)
+      ::Microstation.run(**options) do |app|
         change_in_tempfile(app, &block)
       end
     end

@@ -28,10 +28,10 @@ module Microstation
       @changer.template
     end
 
-    def render(name: nil, output_dir: nil, locals: EMPTY_HASH, tagsets: EMPTY_ARRAY)
+    def render(name: nil, output_dir: nil, locals: EMPTY_HASH, tagsets: EMPTY_ARRAY, options: {visible: false})
       return if locals == EMPTY_HASH && tagsets == EMPTY_ARRAY
 
-      @changer.run(name: name, output_dir: output_dir) do |drawing|
+      @changer.run(name: name, output_dir: output_dir, options: options) do |drawing|
         locals = normalize_hash(locals)
         update_text(drawing, locals)
         update_tagsets(drawing, tagsets)
