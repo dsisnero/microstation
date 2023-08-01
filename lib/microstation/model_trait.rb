@@ -45,7 +45,6 @@ module Microstation
             result << t
           end
         end
-        result
       end
     end
 
@@ -154,11 +153,11 @@ module Microstation
     # @param [Scan::Criteria] criteria - the criteria to scan
     # @yield the item
     def scan_model(criteria = nil)
-      #    binding.pry
+      #    binding.break
       criteria ||= create_scanner(:nullscanner)
       scan_result = ole_run_scan(criteria)
       return [] unless scan_result
-      #   binding.pry
+      #   binding.break
       scan_enum = ::Microstation::Enumerator.new(scan_result, app)
       result = []
       if block_given?

@@ -4,7 +4,7 @@ require "methadone"
 
 require "microstation"
 require "microstation/extensions/faa"
-require "pry"
+require "debug"
 
 class PwApp
   include Methadone::Main
@@ -16,7 +16,7 @@ class PwApp
 
 
     app = Microstation.save_current_drawing(directory_path, exit: options["exit"])
-    binding.pry unless options["exit"]
+    binding.break unless options["exit"]
   end
 
   description "Save the currently open projectwise drawing"

@@ -14,7 +14,7 @@ require "minitest/spec"
 require "minitest/autorun"
 require "minitest/hooks/default"
 require "microstation"
-require "pry"
+require "debug"
 def drawing_path(file)
   (DRAWING_DIR + file).expand_path
 end

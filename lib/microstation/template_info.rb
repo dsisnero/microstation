@@ -26,7 +26,7 @@ module Microstation
       else
         drawing_path = drawing.to_path
       end
-      binding.pry
+      binding.break
       ::Microstation::App.run(visible: visible) do |app|
         app.open_drawing(drawing_path) do |d|
           initialize_attributes(d)
@@ -34,7 +34,6 @@ module Microstation
       end
       @tagset_filter = tagset_filter
       @tagset_map = tagset_map
-      self
     end
 
     def initialize_attributes(drawing)

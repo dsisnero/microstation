@@ -104,7 +104,7 @@ module Microstation
       ole = begin
         @ole_obj.add(name)
       rescue
-        binding.pry
+        binding.break
       end
       # ts = Tagset.new(ole)
       # yield definer if block_given?

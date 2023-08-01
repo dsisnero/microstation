@@ -29,7 +29,7 @@ Hoe.spec "microstation" do
   clean_globs << "**/#*.*#"
   #  self.yard_markup = 'asciidoc'
   self.urls = {home: "https://github.com/dsisnero/microstation"}
-  dependency("methadone", ">= 0.0.0")
+  dependency("optparse-plus", ">= 0.0.0")
   dependency("liquid", "> 0.0.0")
   dependency("gli", "> 0.0.0")
   dependency("dry-monads", "> 0.0.0")
@@ -58,7 +58,7 @@ Hoe.spec "microstation" do
   dependency("solargraph-standardrb", "> 0.0.0", :dev)
   # dependency('windows-pr', '>0.0.0')
   license("MIT")
-  #  require 'pry';binding.pry
+  #  require "debug";binding.break
 
   # self.rubyforge_name = 'microstation' # if different than 'microstation'
 end

@@ -23,8 +23,8 @@ describe "points by rectangle" do
 
   it "should be a function on app" do
     skip
-    require "pry"
-    binding.pry
+    require "debug"
+    binding.break
     drawing = app.new_drawing("temp.dgn")
     pts = app.get_points_by_rectangle
     puts pts.value
@@ -34,8 +34,8 @@ describe "points by rectangle" do
     it "should not error" do
       skip
       drawing = app.new_drawing("temp.dgn")
-      require "pry"
-      binding.pry
+      require "debug"
+      binding.break
       pts = app.get_points_by_line
     end
   end
