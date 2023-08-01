@@ -2,6 +2,7 @@
 
 require "rubygems"
 require "rake/clean"
+require "standard/rake"
 # require 'rake/testtask'
 require "hoe"
 # require 'hoe/minitest'
