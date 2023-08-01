@@ -60,7 +60,7 @@ module Microstation
       end
 
       def method_missing(meth, *args, &block)
-        # binding.pry
+        # binding.break
         base = meth.to_s.sub("=", "")
         if attributes.include?(base)
           if /(=)/.match?(meth)

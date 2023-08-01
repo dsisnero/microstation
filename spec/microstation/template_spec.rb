@@ -7,7 +7,7 @@ require "digest/md5"
 require "minitest/spec"
 require "minitest/autorun"
 
-require "microstation/template"
+require "microstation"
 
 module TestHelper
   def digest_for_path(file)
@@ -111,8 +111,8 @@ describe Microstation::Template do
           text = Microstation.get_text(output_file)
           ["text1 change 1", "text2 change 2", "text3 c3", "node1 c4\nnode1 ", "node2 \nnode2 ",
             "text a1 again change 1"].each do |t|
-            _(text).must_include(t)
-          end
+              _(text).must_include(t)
+            end
         end
 
         it "doesn't change input file" do
@@ -125,6 +125,36 @@ describe Microstation::Template do
           _(FileUtils.compare_file(output_file, copied_file)).must_equal false
         end
       end
+      describe "a drawing with liquid blocks in cells " do
+        # before :all do
+        #   @dgn_file = drawing_path('drawing_with_block.dgn')
+        #   @template = Microstation::Template.new(@dgn_file)
+        # end
+
+        let(:filename) { "drawing_with_liquid_in_cell.dgn" }
+        let(:drawing_file) { drawing_path(filename) }
+        let(:template) { Microstation::Template.new(drawing_file) }
+        let(:output_file) { output_path(filename) }
+        let(:locals) { {"fx" => "121.59"} }
+
+        before do
+          FileUtils.rm(output_file) if File.exist? output_file
+        end
+
+
+        it "updates the cells liquid text" do
+          template.render(output_dir: OUTPUT_DIR, locals: locals)
+          Microstation.run(visible: true) do |app|
+            drawing = app.open_drawing(output_file)
+            result = drawing.get_text_in_cells
+            _(result).must_include("121.59 TX Main")
+            _(result).must_include("121.59 Rx Main")
+            _(result).must_include("121.59 TX Stby")
+            _(result).must_include("121.59 Rx Stby")
+          end
+        end
+      end
+
 
       describe "a drawing with multiple blocks of the same block" do
         # before :all do
@@ -136,19 +166,30 @@ describe Microstation::Template do
         let(:drawing_file) { drawing_path(filename) }
         let(:template) { Microstation::Template.new(drawing_file) }
         let(:output_file) { output_path(filename) }
+        let(:panel) {
+          {"brk_1_service" => "OUTLETS",
+           "brk_2_service" => "AIR CONDITIONER"}
+        }
 
         before do
           FileUtils.rm(output_file) if File.exist? output_file
         end
 
-        it "updates the drawing_blocks" do
-          panel = {"brk_1_service" => "OUTLETS",
-                   "brk_2_service" => "AIR CONDITIONER",
-                   "microstation_id" => 324}
-          template.render(output_dir: OUTPUT_DIR, tagsets: [{"electrical_panel_42" => panel}])
-          Microstation.run do |app|
+        it "errors if not given microstation_id to distinguish" do
+          old_proc = Microstation::App.default_error_proc
+          Microstation::App.default_error_proc = ->(e, f) { raise e }
+          _ { template.render(output_dir: OUTPUT_DIR, tagsets: [{"electrical_panel_42" => panel}]) }.must_raise(Microstation::MultipleUpdateError)
+          Microstation::App.default_error_proc = old_proc
+        end
+
+
+        it "updates the drawing_blocks if given id" do
+          panel_with_id = panel.merge("microstation_id" => 324)
+          template.render(output_dir: OUTPUT_DIR, tagsets: [{"electrical_panel_42" => panel_with_id}])
+          Microstation.run(visible: true) do |app|
             drawing = app.open_drawing(output_file)
             ts = drawing.find_tagset_instance_by_name_and_id("electrical_panel_42", 324)
+            _(ts.brk_1_service).must_equal("OUTLETS")
             _(ts.brk_2_service).must_equal("AIR CONDITIONER")
           end
         end

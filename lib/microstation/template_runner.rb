@@ -13,7 +13,7 @@ module Microstation
         YAML.load(f)
       end
     rescue => e
-      binding.pry
+      binding.break
       puts "Could not parse YAML: #{e.message}"
     end
 
@@ -51,7 +51,7 @@ module Microstation
       run_options = template_options.merge(options)
       the_template.render(run_options)
     rescue
-      binding.pry
+      binding.break
     end
   end
 end

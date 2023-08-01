@@ -1,17 +1,32 @@
 #!/usr/bin/env ruby
 $LOAD_PATH.unshift("../lib")
-require "optparse"
+require "optparse_plus"
 require "methadone"
 require "microstation"
 
 class App
-  include Methadone::Main
-  include Methadone::CLILogging
+  include OptparsePlus::Main
+  include OptparsePlus::CLILogging
 
   main do |directory, output_dir|
     directory_path = Pathname.new(directory).expand_path
-    exit_now! "arg directory: #{directory_path} doesn't exist" unless directory_path.directory?
-    Microstation.dgn2pdf(directory_path, output_dir)
+    mode = options[:f] ? :file : :dir
+    odir = case [mode, output_dir]
+    in _, String => dir_out
+      dir_out
+    in :dir, nil
+      directory_path
+    in :file, nil
+      Pathname.getwd
+    end
+
+    if mode == :dir
+      exit_now! "arg directory: #{directory_path} doesn't exist" unless directory_path.directory?
+    else
+      exit_now! "arg file: #{directory_path} doesn't exist" unless directory_path.file?
+    end
+
+    Microstation.dgn2pdf(directory_path, outdir: odir, mode: mode)
     # your program code here
     # You can access CLI options via
     # the options Hash
@@ -24,7 +39,7 @@ class App
   description "Convert a directory of Microstation files (*.dgn) to pdf"
 
   on("-o", "--output_dir", "Output Dir")
-
+  on("-f", "Single file mode")
 
   arg :directory
   arg :output_dir, :optional

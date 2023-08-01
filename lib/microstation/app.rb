@@ -4,7 +4,7 @@ require_relative "wrap"
 require_relative "point3d"
 require_relative "event_handler"
 require_relative "functions"
-require "pry"
+require "debug"
 
 class WIN32OLE
   def ole_obj
@@ -33,20 +33,22 @@ module Windows
 end
 
 module Microstation
-  module MSD
-  end
-
-  def self.win_fs
-    @windows_fs ||= Windows::FileSystem.new
-  end
-
   class App
     include Functions
 
-    @default_app_options = {visible: false}
+    @default_error_proc = ->(e, f) {
+      puts "Couldn't open drawing #{f}"
+      puts e.backtrace
+    }
 
     class << self
-      attr_accessor :default_app_options
+      attr_accessor :default_error_proc
+
+      def default_app_options
+        {visible: false, error_proc: @default_error_proc, wait_time: 500, wait_interval: 0.5}
+      end
+
+
 
       #  include Wrap
 
@@ -67,12 +69,17 @@ module Microstation
       # @return [void]
       def run(options = {})
         opts = default_app_options.merge(options)
+        err_fn = opts.fetch(:error_proc, default_error_proc)
         begin
           the_app = new(**opts)
-          binding.pry if the_app.nil?
+          binding.break if the_app.nil?
           yield the_app
-        rescue
-          binding.pry
+        rescue => e
+          if e.respond_to? :drawing
+            err_fn.call(e, e.drawing)
+          else
+            err_fn.call(e, nil)
+          end
         ensure
           the_app.quit if the_app.respond_to? :quit
           the_app = nil
@@ -87,8 +94,7 @@ module Microstation
       # @yield Drawing
       # @return [void]
       def open_drawing(drawing, **options, &block)
-        opt_visible = options.delete(:visible) || false
-        run(visible: opt_visible) do |app|
+        run(**options) do |app|
           app.open_drawing(drawing, **options, &block)
         end
       end
@@ -115,12 +121,12 @@ module Microstation
       def with_drawings(*files, **options, &block)
         # drawing_options = default_drawing_options.merge(options)
         # app_options = default_app_options
-        errors = []
+        opts = default_options.merge(options)
         files = files[0] if files[0].is_a? Array
         opt_visible = options.delete(:visible) || false
         error_proc = options.delete(:error_proc)
         begin
-          the_app = new(visible: opt_visible)
+          the_app = new(**opts)
           files_enum = files.each
           loop do
             file = files_enum.next
@@ -142,12 +148,12 @@ module Microstation
       end
     end
 
-    attr_reader :scanners, :visible, :app_event, :project_dir
+    attr_reader :scanners, :visible, :app_event, :project_dir, :error_proc
 
     # Constructor for app
     # @param [Boolean] visible
     # @param event_handler [EventHandler]
-    def initialize(visible: false, event_handler: default_event_handler)
+    def initialize(visible: false, error_proc: self.class.default_error_proc, event_handler: default_event_handler, wait_interval: nil, wait_time: nil)
       @visible = visible
       @event_handler = event_handler
       @ole_obj, @app_event = init_ole_and_app_event(visible: @visible, event_handler: @event_handler, tries: 5,
@@ -156,8 +162,9 @@ module Microstation
       @windows = Windows::FileSystem.new
       #  make_visible(visible)
       @scanners = {}
+      @error_proc = error_proc
     rescue => e
-      binding.pry
+      @error_proc.call(e, nil)
     end
 
     def run_templates_in_dir(dir, options = {})
@@ -262,7 +269,11 @@ module Microstation
     # @return [void]
     #
     def visible=(bool)
-      ole_obj.Visible = bool
+      make_visible !!bool
+    end
+
+    def default_app_options
+      self.class.default_app_options
     end
 
     def project_dir=(dir)
@@ -288,7 +299,7 @@ module Microstation
       begin
         ole_obj.Visible = @visible
         true
-      rescue Exception => e
+      rescue
         false
       end
     end
@@ -297,7 +308,7 @@ module Microstation
       is_ok = true
       begin
         @ole_obj.Visible
-      rescue => e
+      rescue
         is_ok = false
       end
 
@@ -326,24 +337,27 @@ module Microstation
     # @param wait_interval [Float] the amount of time in seconds to wait before retry (0.5)
     # @yield [Drawing] drawing
     # @return [void]
-    def open_drawing(filename, readonly: false, error_proc: nil, wait_time: 500, wait_interval: 0.5)
+    def open_drawing(filename, options: {})
+      opts = default_app_options.merge(options)
+      err_fn = opts.fetch(:error_proc, error_proc)
       filename = Pathname(filename)
       raise FileNotFound unless filename.file?
 
       begin
-        ole = ole_open_drawing(windows_path(filename), readonly: readonly, wait_time: wait_time,
-          wait_interval: wait_interval)
-      rescue => e
-        raise e unless error_proc
+        ole = ole_open_drawing(windows_path(filename), readonly: opts[:readonly], wait_time: opts[:wait_time], wait_interval: opts[:wait_interval])
+      rescue DrawingError => e
+        raise e unless err_fn
 
-        error_proc.call(filename)
-        return
+        err_fn.call(e, e.drawing)
       end
       drawing = drawing_from_ole(ole)
       return drawing unless block_given?
 
       begin
         yield drawing
+      rescue => e
+        raise e unless err_fn
+        err_fn.call(e, filename)
       ensure
         drawing.close
       end
@@ -381,23 +395,26 @@ module Microstation
     #   this is the same value as ActiveDesignFile. If the Open argument is False,
     #   CreateDesignFile returns Nothing.
     # @return [Drawing]
-    def new_drawing(filename, seedfile: nil, open: true, wait_time: 500, wait_interval: 1, &block)
+    def new_drawing(filename, seedfile: nil, open: true, options: {}, &block)
+      opts = default_app_options.merge(options)
+      err_fn = opts.fetch(:error_proc, error_proc)
       file_path = Pathname(filename).expand_path
       raise ExistingFile, file_path if file_path.exist?
 
       # drawing_name = normalize_name(filename)
       seedfile = determine_seed(seedfile)
-      binding.pry unless seedfile
+      binding.break unless seedfile
       windows_name = windows_path(filename)
-      ole = new_ole_drawing(seedfile, windows_name, open: open, wait_time: wait_time, wait_interval: wait_interval)
+      ole = new_ole_drawing(seedfile, windows_name, open: open, wait_time: opts[:wait_time], wait_interval: opts[:wait_interval])
       drawing = drawing_from_ole(ole)
       return drawing unless block
 
       begin
         yield drawing
+      rescue DrawingError => e
+        err_fn.call(e, e.drawing)
       rescue => e
-        "puts error in new drawing"
-        raise e
+        err_fn.call(e, file_path)
       ensure
         drawing.close
       end
@@ -406,11 +423,8 @@ module Microstation
     def new_ole_drawing(seedfile, new_design_file_name, open: true, wait_time: 500, wait_interval: 0.5)
       ole = ole_obj.CreateDesignFile(seedfile, new_design_file_name, open)
       wait_drawing_opened(wait_time, wait_interval)
-      raise "drawing not opened in #{wait_time}" unless drawing_opened?
-
-      ole
-    rescue => e
-      raise e
+      return ole if drawing_opened?
+      raise DrawingError.new("New drawing not opened in #{wait_time}", new_design_file_name)
     end
 
     def has_current_drawing?
@@ -560,7 +574,7 @@ module Microstation
       criteria.resolve
       model.scan(criteria.ole_obj)
     rescue Exception
-      # binding.pry
+      # binding.break
     end
 
     # lets you interact with the cad_input_queue
@@ -661,7 +675,7 @@ module Microstation
       if vec.instance_of?(WIN32OLE_RECORD) && vec.typename == "Matrix3d"
         vec
       else
-        binding.pry
+        binding.break
       end
     end
 
@@ -742,14 +756,14 @@ module Microstation
 
     def method_missing(meth, *args, &block)
       if /^[A-Z]/.match?(meth.to_s)
-        require "pry"
-        binding.pry
+        require "debug"
+        binding.break
         result = ole_obj.send(meth, *args, &block)
       else
         super(meth, *args, &block)
       end
     rescue => e
-      binding.pry
+      binding.break
     end
 
     protected
@@ -757,11 +771,9 @@ module Microstation
     def ole_open_drawing(path, readonly: false, wait_time: 500, wait_interval: 0.5)
       ole = ole_obj.OpenDesignFile(windows_path(path), "ReadOnly" => readonly)
       wait_drawing_opened(wait_time, wait_interval)
-      raise "drawing not opened in #{wait_time}" unless drawing_opened?
+      return ole if drawing_opened?
 
-      ole
-    rescue => e
-      raise e
+      raise DrawingError.new("drawing not opened in #{wait_time}", path) unless drawing_opened?
     end
 
     def load_constants(ole_obj)

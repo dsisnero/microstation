@@ -32,5 +32,9 @@ module Microstation
       @drawing = drawing
       @ole_obj = ole
     end
+
+    def sheet_model?
+      @ole_obj.Type == MSD::MsdModelTypeSheet
+    end
   end
 end

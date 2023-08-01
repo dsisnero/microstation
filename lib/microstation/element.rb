@@ -225,7 +225,7 @@ module Microstation
       begin
         ole.ResetElementEnumeration
       rescue
-        binding.pry
+        binding.break
       end
       while ole.MoveToNextElement
         component = ole.CopyCurrentElement

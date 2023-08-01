@@ -22,6 +22,15 @@ require "microstation/template_runner"
 require "erb"
 
 module Microstation
+  class MultipleBlockError < StandardError; end
+
+  module MSD
+  end
+
+  def self.win_fs
+    @windows_fs ||= Windows::FileSystem.new
+  end
+
   ROOT = Pathname(__dir__).parent
 
   TEMPLATES_PATH = ROOT + "templates"
@@ -35,21 +44,9 @@ module Microstation
       end
     end
 
-    def default_error_proc
-      @default_error_proc ||= ->(e, f) { puts "Couldn't open drawing #{f}" }
+    def default_error_proc=(proc)
+      Microstation::App.default_error_proc = proc
     end
-
-    def default_drawing_options
-      {read_only: true, error_proc: default_error_proc}
-    end
-
-    attr_writer :default_error_proc
-
-    attr_reader :default_app_options
-
-    attr_writer :default_app_options
-
-    default_app_options = {visible: false}
 
     def root
       ROOT
@@ -63,8 +60,7 @@ module Microstation
       def context.binding
         binding
       end
-      options = {readonly: true}
-      App.run do |app|
+      App.run(**options) do |app|
         tmpfile = Tempfile.new("drawing")
         app.new_drawing(tmpfile, template) do |drawing|
           drawing.scan_text do |text|
@@ -113,10 +109,17 @@ module Microstation
 
     # @param dir [String] the directory of drawing [dgn,dwg] to convert
     # @param outdir [String] the output dir for converted pdf files
-    def dgn2pdf(dir, outdir = dir)
-      drawings = drawings_in_dir(dir)
-      with_drawings(drawings) do |drawing|
-        drawing.save_as_pdf(name: drawing.name, dir: outdir)
+    def dgn2pdf(dir_or_file, outdir: dir_or_file, mode: :dir)
+      raise "Mode on of :dir or :file" unless [:dir, :file].include? mode
+      if mode == :dir
+        drawings = drawings_in_dir(dir_or_file)
+        with_drawings(drawings) do |drawing|
+          drawing.save_as_pdf(name: drawing.name, dir: outdir)
+        end
+      else
+        open_drawing(dir_or_file) do |drawing|
+          drawing.save_as_pdf(name: drawing.name, dir: outdir)
+        end
       end
     end
 
@@ -193,7 +196,7 @@ end
 
 if $0 == __FILE__
 
-  require "pry"
+  require "debug"
 
   app = Microstation::App.new
   require "microstation/ole_helper"
@@ -208,7 +211,6 @@ if $0 == __FILE__
   event_classes = ole_obj.select_ole_type("event")
   puts event_classes
 
-
   # drawing = app.new_drawing('mynew.dgn')
 
   # le =tlib.ole_classes.find{|c| c.name == 'LineElement'}
@@ -220,18 +222,12 @@ if $0 == __FILE__
   # e1 = WIN32OLE_VARIANT::NoParam
   # e2 = WIN32OLE_VARIANT.new(nil, VT::VT_VARIANT|VT::VT_BYREF)
 
-
   # drawing.change_model('Default')
   # line = drawing.create_line [1,0.5],[1,1,0],e1
   # drawing.add_line line if line
 
-
-
-  binding.pry
-
+  binding.break
 
   app.quit
-
-
 
 end

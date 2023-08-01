@@ -6,7 +6,7 @@ module Microstation
       begin
         ole = app.ole_obj.CreateLineElement2(el, pt1, pt2)
       rescue Exception => e
-        binding.pry
+        binding.break
         return nil
       end
       add_element(ole) if ole
@@ -18,10 +18,10 @@ module Microstation
       if ole
         add_element(ole)
       else
-        binding.pry
+        binding.break
       end
     rescue Exception => e
-      binding.pry
+      binding.break
       nil
     end
   end

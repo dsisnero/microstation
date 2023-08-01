@@ -34,7 +34,7 @@ module Microstation
     end
 
     def bounds
-      binding.pry
+      binding.break
       rotation = ole_obj.Rotation
       inverse_rotation = begin
         app_ole_obj.Matrix3dInverse(rotation)

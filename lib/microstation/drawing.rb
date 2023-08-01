@@ -104,7 +104,7 @@ module Microstation
         wait_save_event(10)
         raise "drawing not saved in 10 seconds" unless @drawing_saved
       rescue => e
-        binding.pry
+        binding.break
       end
     end
 
@@ -165,6 +165,18 @@ module Microstation
       result
     end
 
+    def get_text_in_cells
+      result = []
+      scan_text_in_cells do |text|
+        if block_given?
+          yield text
+        else
+          result << text.to_s
+        end
+      end
+      result
+    end
+
     # scan all text and text regions in all
     # models
     # @yield [Model,String] text that is found
@@ -185,8 +197,8 @@ module Microstation
     end
 
     def scan_text_in_cells(&block)
-      scan_cells do |_model, c|
-        c.text_elements(&block)
+      scan_cells do |_model, cell|
+        cell.text_elements(&block)
       end
     end
 
@@ -289,6 +301,23 @@ module Microstation
 
     def pen_table
       app.windows_path((::Microstation.plot_driver_directory + "wmbw.tbl"))
+    end
+
+    # iterate through eack sheet model in the drawing
+    #  and yield them
+    #  @yield [Model] model
+    def each_sheet_model
+      result = []
+      each_model do |m|
+        if m.sheet_model?
+          if block_given?
+            yield m
+          else
+            result << m
+          end
+        end
+      end
+      result unless block_given?
     end
 
     # iterate through each model in the drawing
@@ -441,7 +470,7 @@ module Microstation
       else
         get_tagsets_in_drawing_hash
       end
-      binding.pry
+      binding.break
       filtered.map do |h|
         element_id = h[:base_element_id]
         result << tagset.create_instance(element_id, h[:tags], h[model])
@@ -582,7 +611,7 @@ module Microstation
         is_ok = false
       end
 
-      binding.pry unless is_ok || drawing_closed?
+      binding.break unless is_ok || drawing_closed?
 
       @ole_obj
     end
@@ -628,7 +657,15 @@ module Microstation
       h
     end
 
+    def activate_d_sheet_model
+      m = each_sheet_model.find { _1.name =~ /D Sheet/i }
+      m&.activate
+      return m if m
+      nil
+    end
+
     def print_pdf(windows_path)
+      dsheet = activate_d_sheet_model
       cad_input_queue do |q|
         q << "Print Driver #{pdf_driver}"
         q << "Print Papername ANSI D"

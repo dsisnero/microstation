@@ -8,7 +8,7 @@ end
 module Microstation
   class Drawing
     def number
-      binding.pry
+      binding.break
       Drawing::Number.from_string(basename)
     end
 

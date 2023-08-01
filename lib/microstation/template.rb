@@ -10,6 +10,13 @@ require File.join(File.dirname(__FILE__), "file_tests")
 require File.join(File.dirname(__FILE__), "errors")
 
 module Microstation
+  # A Class to use a Microstation Drawing as a Template.
+  #
+  # Given a Microstation drawing, if it has tags {{ var  }} in any of the text
+  # it can update the variables by providing a locals: hash to the #render method.
+  #
+  # Also, if you provide tagsets: variable, which is an array of Hash it will update
+  # any tagsets in the drawing
   class Template
     EMPTY_ARRAY = [].freeze
     EMPTY_HASH = {}.freeze
