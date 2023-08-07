@@ -92,6 +92,10 @@ describe Microstation::Template do
         template.render(output_dir: OUTPUT_DIR)
       end
 
+      it "accepts options hash" do
+        template.render(output_dir: OUTPUT_DIR, options: {visible: true})
+      end
+
       describe "when locals or tagsets not input" do
         it "does nothing unless either locals or tagsets" do
           template.render(output_dir: OUTPUT_DIR)
@@ -143,7 +147,7 @@ describe Microstation::Template do
 
 
         it "updates the cells liquid text" do
-          template.render(output_dir: OUTPUT_DIR, locals: locals)
+          template.render(output_dir: OUTPUT_DIR, locals: locals, options: {visible: true})
           Microstation.run(visible: true) do |app|
             drawing = app.open_drawing(output_file)
             result = drawing.get_text_in_cells

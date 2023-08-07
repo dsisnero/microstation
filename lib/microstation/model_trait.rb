@@ -177,12 +177,9 @@ module Microstation
     private
 
     def ole_run_scan(criteria)
-      criteria.resolve
-      scan_result = begin
-        ole_obj.Scan(criteria.ole_obj)
-      rescue
-        nil
-      end
+      ole_obj.Scan(criteria.ole_obj)
+    rescue => e
+      app.error_proc.call("Error Running scan criteria in model #{name}", nil)
     end
   end
 end

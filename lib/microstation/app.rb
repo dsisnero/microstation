@@ -121,7 +121,7 @@ module Microstation
       def with_drawings(*files, **options, &block)
         # drawing_options = default_drawing_options.merge(options)
         # app_options = default_app_options
-        opts = default_options.merge(options)
+        opts = default_app_options.merge(options)
         files = files[0] if files[0].is_a? Array
         opt_visible = options.delete(:visible) || false
         error_proc = options.delete(:error_proc)

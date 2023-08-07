@@ -42,6 +42,7 @@ module Microstation
         else
           default_block.call(drawing)
         end
+        drawing.save
       end
       path
     rescue MultipleUpdateError => e

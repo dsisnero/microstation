@@ -61,8 +61,8 @@ module Microstation
     end
 
     def change_template_text_in_cells(drawing, locals = {})
-      drawing.scan_cells do |_model, c|
-        c.text_elements do |text|
+      drawing.scan_cells do |_model, cell|
+        cell.text_elements do |text|
           new_text = update_liquid_text(text, locals)
           text.replace new_text if new_text != text.to_s
         end

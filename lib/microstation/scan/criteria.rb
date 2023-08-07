@@ -27,30 +27,43 @@ module Microstation
       include Scan::Subtype
       include Scan::Range
 
-      attr_reader :app, :ole_obj
+      attr_reader :app, :ole_obj, :name
 
       def self.create_scanner(name = nil, app, &block)
         sc = create(name, app)
         return sc unless block
 
         (block.arity < 1) ? sc.instance_eval(&block) : block.call(sc)
+        sc.resolve
         sc
       end
 
       def self.create(name = nil, app)
-        sc = new(app)
         name = "anon#{app.scanners.size + 1}" if name.nil?
+        sc = new(name, app)
         app.scanners[name] = sc
         sc
       end
 
-      def initialize(app)
+      def initialize(name, app)
+        @name = name
         @app = app
         @ole_obj = @app.create_ole_scan_criteria
         @app.load_constants unless defined? ::Microstation::MSD
       end
 
+      def reset_all_criteria
+        reset_ole_types
+        reset_colors
+        reset_classes
+        reset_levels
+        reset_subtypes
+        reset_lineweights
+        reset_linestyles
+      end
+
       def resolve
+        # reset_all_criteria
         resolve_type_scans
         resolve_class_scans
         resolve_color_scans
