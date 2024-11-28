@@ -1,3 +1,5 @@
 test_outdir/*
 pkg/
 doc/
+.aider*
+.env
