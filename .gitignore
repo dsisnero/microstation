@@ -1,4 +1,5 @@
 test_outdir/*
+tmp/*
 pkg/
 doc/
 .aider*
