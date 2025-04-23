@@ -20,6 +20,7 @@ module Microstation
   class Template
     EMPTY_ARRAY = [].freeze
     EMPTY_HASH = {}.freeze
+
     def initialize(template, output_dir: nil, app: nil, name: nil)
       @changer = Changer.new(template, output_dir: output_dir, app: app, name: name)
     end
@@ -58,6 +59,8 @@ module Microstation
         new_text = update_liquid_text(text, locals)
         text.replace new_text if new_text != text.to_s
       end
+    rescue => e
+      drawing.app.error_proc.call(e, drawing)
     end
 
     def change_template_text_in_cells(drawing, locals = {})
@@ -67,16 +70,16 @@ module Microstation
           text.replace new_text if new_text != text.to_s
         end
       end
+    rescue => e
+      drawing.app.error_proc.call(e.drawing)
     end
 
     def update_liquid_text(text, locals)
       update_hash = normalize_hash(locals)
       compiled = ::Liquid::Template.parse(text.to_s)
-      new_text = begin
-        compiled.render(update_hash)
-      rescue
-        text
-      end
+      compiled.render(update_hash)
+    rescue => e
+      Microstation.default_error_proc.call(e, nil)
     end
 
     def normalize_hash(scope)

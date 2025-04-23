@@ -12,6 +12,15 @@ describe Microstation do
     end
   end
 
+  describe "default error proc" do
+    subject { Microstation }
+
+    it "can change error proc" do
+      _(Microstation.default_error_proc = ->(e, f) { "Hi there" })
+      _(Microstation.open_drawing("nonexisrent")).must_equal("Hi there")
+    end
+  end
+
   describe "#run" do
     it "opens up and yields an app" do
       result = nil

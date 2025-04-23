@@ -45,7 +45,7 @@ module Microstation
     end
 
     def default_error_proc=(proc)
-      Microstation::App.default_error_proc = proc
+      App.default_error_proc = proc
     end
 
     def root
@@ -157,6 +157,8 @@ module Microstation
       end
     end
 
+    # Gets all the text from all the models in drawing file
+    # @param file [[file:String]] [The file you want to get text from]
     def get_all_text(file)
       App.open_drawing(file) do |d|
         d.get_all_text
@@ -188,8 +190,8 @@ module Microstation
       end
     end
 
-    def run(options = {}, &block)
-      App.run(options, &block)
+    def run(options = {}, &)
+      App.run(options, &)
     end
   end
 end

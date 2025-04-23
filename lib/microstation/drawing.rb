@@ -13,6 +13,7 @@ require "liquid"
 # //
 # ##define DISP_E_PARAMNOTFOUND       _HRESULT_TYPEDEF_(0x80020004L)
 module Microstation
+  # A Microstation drawing
   class Drawing
     include Properties
     include TagSetTrait
@@ -50,8 +51,8 @@ module Microstation
 
     # @yield [Microstation::CadInputQueue] yields a cad_input_queue to
     # the block
-    def cad_input_queue(&block)
-      @app.cad_input_queue(&block)
+    def cad_input_queue(&)
+      @app.cad_input_queue(&)
     end
 
     # copy the drawing
@@ -128,10 +129,10 @@ module Microstation
     # @param [Model]
     # @criteria [Scan::Criteria]
     # @yield
-    def scan_model(criteria, model: default_model_reference, &block)
+    def scan_model(criteria, model: default_model_reference, &)
       criteria ||= create_scan_criteria
       model ||= default_model_reference
-      model.scan_model(criteria, &block)
+      model.scan_model(criteria, &)
     end
 
     # scans all the drawing models with criteria
@@ -180,20 +181,20 @@ module Microstation
     # scan all text and text regions in all
     # models
     # @yield [Model,String] text that is found
-    def scan_text(&block)
-      scan_all(text_criteria, &block)
+    def scan_text(&)
+      scan_all(text_criteria, &)
     end
 
     # scan all tags in drawing and
     # @yield [Model,Tag] to the block
-    def scan_tags(&block)
-      scan_all(tags_criteria, &block)
+    def scan_tags(&)
+      scan_all(tags_criteria, &)
     end
 
     # scan all cells in drawing and
     # @yield [Model,Cell] to the block
-    def scan_cells(&block)
-      scan_all(cells_criteria, &block)
+    def scan_cells(&)
+      scan_all(cells_criteria, &)
     end
 
     def scan_text_in_cells(&block)
@@ -382,8 +383,8 @@ module Microstation
       active_model.get_selected_text
     end
 
-    def get_matching_text(re, &block)
-      active_model.get_matching_text(re, &block)
+    def get_matching_text(re, &)
+      active_model.get_matching_text(re, &)
     end
 
     def change_text_suffix(reg, offset)
@@ -457,8 +458,8 @@ module Microstation
       active_model.add_element(line)
     end
 
-    def create_scanner(name, &block)
-      app.create_scanner(name, &block)
+    def create_scanner(name, &)
+      app.create_scanner(name, &)
     end
 
     # used
@@ -538,7 +539,7 @@ module Microstation
           end
         end
       end
-      return results unless block_given?
+      results unless block_given?
     end
 
     def update_tagset(name, h_local = {})

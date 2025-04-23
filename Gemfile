@@ -4,30 +4,48 @@
 
 source "https://rubygems.org/"
 
-gem "optparse-plus", ">=0.0.0"
-gem "liquid", ">0.0.0"
-gem "gli", ">0.0.0"
-gem "dry-monads", ">0.0.0"
+# gem "optparse-plus", ">=0.0.0"
+# gem "liquid", ">0.0.0"
+# gem "gli", ">0.0.0"
+# gem "dry-monads", ">0.0.0"
 
-gem "hoe-yard", ">=0.1.3", group: [:development, :test]
-gem "minitest", ">0.0.0", group: [:development, :test]
-gem "minitest-hooks", ">0.0", group: [:development, :test]
-gem "aruba", ">0.0.0", group: [:development, :test]
-gem "yard", ">=0.0", group: [:development, :test]
-gem "guard-yard", ">=0.0", group: [:development, :test]
-gem "hoe", "~>4", group: [:development, :test]
-gem "hoe-bundler", ">0.0.0", group: [:development, :test]
-gem "guard", ">0.0.0", group: [:development, :test]
-gem "guard-minitest", ">0.0.0", group: [:development, :test]
-gem "minitest-focus", ">0.0.0", group: [:development, :test]
-gem "notiffany", ">0.0.0", group: [:development, :test]
-gem "debug", ">0.0.0", group: [:development, :test]
-gem "rb-readline", ">0.0.0", group: [:development, :test]
-gem "win32console", ">0.0.0", group: [:development, :test]
-gem "rb-notifu", ">0.0.0", group: [:development, :test]
-gem "wdm", ">0.0.0", group: [:development, :test]
-gem "solargraph", ">0.0.0", group: [:development, :test]
-gem "standard", ">0.0.0", group: [:development, :test]
-gem "solargraph-standardrb", ">0.0.0", group: [:development, :test]
+# gem "hoe-yard", ">=0.1.3", group: [:development, :test]
+# gem "minitest", ">0.0.0", group: [:development, :test]
+# gem "minitest-hooks", ">0.0", group: [:development, :test]
+# gem "aruba", ">0.0.0", group: [:development, :test]
+# gem "yard", ">=0.0", group: [:development, :test]
+# gem "guard-yard", ">=0.0", group: [:development, :test]
+# gem "hoe", ">=4", group: [:development, :test]
+# gem "hoe-bundler", ">0.0.0", group: [:development, :test]
+# gem "guard", ">0.0.0", group: [:development, :test]
+# gem "guard-minitest", ">0.0.0", group: [:development, :test]
+# gem "minitest-focus", ">0.0.0", group: [:development, :test]
+# gem "notiffany", ">0.0.0", group: [:development, :test]
+# gem "debug", ">0.0.0", group: [:development, :test]
+# gem "rb-readline", ">0.0.0", group: [:development, :test]
+# gem "win32console", ">0.0.0", :group => [:development, :test]
+# gem "rb-notifu", ">0.0.0", :group => [:development, :test]
+# gem "wdm", ">0.0.0", :group => [:development, :test]
+# gem "solargraph", ">0.0.0", group: [:development, :test]
+# gem "standard", ">0.0.0", group: [:development, :test]
+# gem "ruby-lsp"
 
 # vim: syntax=ruby
+
+# group :development do
+#   eval_gemfile "gemfiles/rubocop.gemfile"
+# end
+
+group :development do
+  eval_gemfile "gemfiles/rubocop.gemfile"
+end
+
+group :development, :test do
+  gem 'guard'
+  gem 'guard-minitest'
+  gem 'test-notifier'
+  gem 'guard-yard'
+
+  gem 'ruby-lsp'
+  gem 'solargraph'
+end

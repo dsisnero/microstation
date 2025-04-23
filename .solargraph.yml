@@ -1,4 +1,4 @@
-plugins:
-  - solargraph-standardrb
-reporters:
-  - standardrb
+# plugins:
+  # - solargraph-standardrb
+# reporters:
+  # - standardrb

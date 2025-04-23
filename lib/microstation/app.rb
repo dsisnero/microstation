@@ -38,14 +38,20 @@ module Microstation
 
     @default_error_proc = ->(e, f) {
       puts "Couldn't open drawing #{f}"
-      puts e.backtrace
+      debug_error if $DEBUG
+      raise e
     }
+
 
     class << self
       attr_accessor :default_error_proc
 
       def default_app_options
         {visible: false, error_proc: @default_error_proc, wait_time: 500, wait_interval: 0.5}
+      end
+
+      def debug_error
+        require 'debug'; binding.break
       end
 
 

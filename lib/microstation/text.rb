@@ -39,7 +39,7 @@ module Microstation
       inverse_rotation = begin
         app_ole_obj.Matrix3dInverse(rotation)
       rescue
-        pry
+        binding.irb
       end
       transform = app_ole_obj.Transform3dFromMatrix3dandFixedPoint3d(app_ole_obj.Matrix3dInverse(rotation),
         ole_obj.origin)

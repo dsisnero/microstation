@@ -201,6 +201,8 @@ module Microstation
         @updated = false
         false
       end
+    rescue => e
+      app.error_proc.call(e, nil)
     end
 
     def updated?
@@ -208,8 +210,10 @@ module Microstation
     end
 
     def redraw(el = ole_obj)
-      el.Redraw ::Microstation::MSD::MsdDrawingModeNormal
+      # el.Redraw ::Microstation::MSD::MsdDrawingModeNormal if el.IsGraphical
       el.Rewrite
+    rescue => e
+    app.error_proc.call(e, nil)
     end
 
     def app_ole_obj
@@ -234,7 +238,7 @@ module Microstation
         elsif component.IsTextElement
           yield Microstation::Wrap.wrap(component.AsTextElement, app, cell)
         elsif component.IsComplexElement
-          each(component)
+          each(component, &block)
         else
           yield Microstation::Wrap.wrap(component, app, cell)
         end

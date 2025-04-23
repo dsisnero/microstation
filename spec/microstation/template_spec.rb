@@ -198,6 +198,36 @@ describe Microstation::Template do
           end
         end
       end
+
+      describe "Microstation::Template when initialized with an app" do
+        let(:app) { Microstation::App.new(visible: true) }
+        let(:filename1) { "drawing_with_liquid_in_cell.dgn" }
+        let(:drawing_file1) { drawing_path(filename1) }
+        let(:output_file1) { output_path(filename1) }
+        let(:filename2) { "drawing_with_fx_text.dgn" }
+        let(:drawing_file2) { drawing_path(filename2) }
+        let(:output_file2) { output_path(filename2) }
+        let(:template1) { Microstation::Template.new(drawing_file1, app: app) }
+        let(:template2) { Microstation::Template.new(drawing_file2, app: app) }
+        let(:locals) { {"fx" => "130"} }
+
+        before do
+          FileUtils.rm(output_file1) if File.exist? output_file1
+          FileUtils.rm(output_file2) if File.exist? output_file2
+        end
+
+        it "correctly renders drawings" do
+          template1.render(output_dir: OUTPUT_DIR, locals: locals)
+          template2.render(output_dir: OUTPUT_DIR, locals: locals)
+          result = app.open_drawing(output_file1) { |d| d.get_text_in_cells }
+          _(result).must_include("130 TX Main")
+          _(result).must_include("130 Rx Main")
+          _(result).must_include("130 TX Stby")
+          _(result).must_include("130 Rx Stby")
+          result2 = app.open_drawing(output_file2) { |d| d.get_text }
+          _(result2).must_include("130 is the frequency received")
+        end
+      end
     end
   end
 end
